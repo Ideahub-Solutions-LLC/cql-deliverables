@@ -46,9 +46,38 @@ The original managed Site `project_id` is removed from `.openai/hosting.json` to
 
 Credentials, Git metadata/history, `node_modules`, generated builds, local tool state and local/production databases are not included. The archive does not contain hosted task updates made after publication. Existing vendor license files are retained.
 
-## Local inspection
+## Quick start: initialize and run locally
 
-Use Node.js at least `22.13.0` as declared in the supplied package. Begin with the lockfile and the documented portable workflow in `docs/DEPLOYMENT_HANDOFF.md`. Local login and role provisioning are documented in `docs/ACCESS_CONTROL.md`. Revalidate identity, dependencies and production settings on the team's chosen target platform.
+Requirements: Node.js `>=22.13.0`, npm, and Python for the optional account seeder. From the repository root:
+
+```bash
+npm run install:ci
+npm run build
+```
+
+The local app uses Wrangler's persistent local D1 database. On a **fresh** checkout, apply the migrations once, in order:
+
+```bash
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_brief_taskmaster.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0001_accounts_and_sessions.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0002_workspaces_and_projects.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0003_profiles_tasks_comments_notifications.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0004_task_owner_account.sql
+```
+
+To create local sign-in accounts, place the private credential document at the ignored path `notes/credential.docx`, then run `npm run accounts:seed -- notes/credential.docx`. This step is optional for building the app, but needed to sign in with seeded accounts. Keep the credential document out of Git. See `docs/ACCESS_CONTROL.md` for account details.
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Open the local URL printed by Vite (normally `http://localhost:5173`). `npm start` runs a built Wrangler preview on localhost using the same local database. The `.wrangler/state` database and generated build are local state; migrations should not be rerun against an already initialized database.
+
+These commands are for local development. They do not deploy to Cloudflare production. The company Cloudflare Worker, D1 database, authentication, secrets, migrations, and custom domain require the setup described in `docs/DEPLOYMENT_HANDOFF.md`. Do not point local development at production resources.
+
+For production planning, read `docs/DEPLOYMENT_HANDOFF.md` before choosing a hosting path. Revalidate identity, dependencies and production settings on the team's chosen target platform.
 
 ## Success criteria
 
