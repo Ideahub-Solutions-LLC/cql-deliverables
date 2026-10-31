@@ -2,6 +2,7 @@ import { env } from "cloudflare:workers";
 import { headers } from "next/headers";
 
 export const PASSWORD_ITERATIONS = 310_000;
+const MAX_PBKDF2_ITERATIONS_PER_CALL = 100_000;
 export const SESSION_SECONDS = 8 * 60 * 60;
 export const SESSION_COOKIE = "dsi_session";
 
@@ -48,19 +49,31 @@ export function canReview(role: AccountRole) {
 }
 
 export async function passwordDigest(password: string, saltHex: string, iterations = PASSWORD_ITERATIONS) {
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(password),
-    "PBKDF2",
-    false,
-    ["deriveBits"],
-  );
-  const bits = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", hash: "SHA-256", salt: hexToBytes(saltHex), iterations },
-    key,
-    256,
-  );
-  return bytesToHex(new Uint8Array(bits));
+  const salt = hexToBytes(saltHex);
+  let input = new TextEncoder().encode(password);
+  let remaining = iterations;
+  let round = 0;
+
+  // Workers cap each WebCrypto PBKDF2 call at 100,000 iterations. Chaining
+  // round-specific salts preserves the configured total work factor.
+  while (remaining > 0) {
+    const count = Math.min(remaining, MAX_PBKDF2_ITERATIONS_PER_CALL);
+    const roundSalt = new Uint8Array(salt.length + 2);
+    roundSalt.set(salt);
+    roundSalt[salt.length] = 0xff;
+    roundSalt[salt.length + 1] = round;
+    const key = await crypto.subtle.importKey("raw", input, "PBKDF2", false, ["deriveBits"]);
+    const bits = await crypto.subtle.deriveBits(
+      { name: "PBKDF2", hash: "SHA-256", salt: roundSalt, iterations: count },
+      key,
+      256,
+    );
+    input = new Uint8Array(bits);
+    remaining -= count;
+    round += 1;
+  }
+
+  return bytesToHex(input);
 }
 
 export async function verifyPassword(password: string, salt: string, expected: string, iterations: number) {

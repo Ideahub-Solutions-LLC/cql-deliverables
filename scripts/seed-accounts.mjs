@@ -19,6 +19,20 @@ if (!existsSync(inputPath)) {
 const accounts = JSON.parse(readFileSync(inputPath, "utf8"));
 if (!Array.isArray(accounts) || accounts.length === 0) throw new Error("The account file must contain a non-empty JSON array.");
 const usernames = new Set();
+function passwordHash(password, saltHex) {
+  let input = Buffer.from(password, "utf8");
+  let remaining = iterations;
+  let round = 0;
+  while (remaining > 0) {
+    const count = Math.min(remaining, 100_000);
+    const salt = Buffer.concat([Buffer.from(saltHex, "hex"), Buffer.from([0xff, round])]);
+    input = pbkdf2Sync(input, salt, count, 32, "sha256");
+    remaining -= count;
+    round += 1;
+  }
+  return input.toString("hex");
+}
+
 const sql = accounts.map((account) => {
   const username = String(account.username || "").trim().toLowerCase();
   const role = String(account.role || "");
@@ -31,7 +45,7 @@ const sql = accounts.map((account) => {
   if (!roles.has(role)) throw new Error(`Unsupported role for ${username}.`);
   if (password.length < 12 || password.length > 256) throw new Error(`Password for ${username} must contain 12–256 characters.`);
   const salt = randomBytes(16).toString("hex");
-  const digest = pbkdf2Sync(password, Buffer.from(salt, "hex"), iterations, 32, "sha256").toString("hex");
+  const digest = passwordHash(password, salt);
   const quote = (value) => value == null ? "NULL" : `'${String(value).replaceAll("'", "''")}'`;
   return `INSERT INTO delivery_users (username, display_name, role, person_id, password_salt, password_hash, password_iterations, active)
 VALUES (${quote(username)}, ${quote(displayName)}, ${quote(role)}, ${quote(personId)}, ${quote(salt)}, ${quote(digest)}, ${iterations}, 1)
