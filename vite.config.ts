@@ -19,7 +19,7 @@ const localBindingConfig = {
   name: "cql-deliverables",
   account_id: CLOUDFLARE_ACCOUNT_ID,
   workers_dev: true,
-  routes: [{ pattern: "workspace.ideahubsolutions.com", custom_domain: true, zone_name: "ideahubsolutions.com" }],
+  routes: [{ pattern: "workspace.rightteamprovider.com", custom_domain: true, zone_name: "rightteamprovider.com" }],
   main: "./worker/index.ts",
   compatibility_flags: ["nodejs_compat"],
   d1_databases: d1

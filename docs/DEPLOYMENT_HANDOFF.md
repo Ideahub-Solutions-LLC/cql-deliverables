@@ -6,7 +6,7 @@
 
 Deploy the DSI daily execution system on company-controlled infrastructure using a company URL. Preserve the October 22-December 16 execution plan and December 17-18 review period. Let staff report their work every day, let Wyline review it, and keep inquiries, appointments, held conversations and received trials visible.
 
-Suggested hostname for the team to confirm: `projects.ideahubsolutions.com`. This is a proposal, not an active deployment. Keep the existing company website intact; use a dedicated subdomain and HTTPS.
+Recommended hostname: `workspace.rightteamprovider.com`. This is the requested company subdomain for the CQL Deliverables Cloudflare Worker; it still requires the `rightteamprovider.com` zone and Worker custom domain to be configured in Cloudflare. Keep the existing company website intact and use HTTPS.
 
 | Responsibility | Owner / assignment |
 | --- | --- |
