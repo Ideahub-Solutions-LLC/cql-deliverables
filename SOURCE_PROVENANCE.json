@@ -11,6 +11,12 @@
     "Renamed original README to README_PLATFORM_BASELINE.md",
     "Removed original managed project_id from .openai/hosting.json"
   ],
+  "subsequent_local_additions": [
+    "Local account sign-in, role enforcement, and disabled-by-default sign-up",
+    "Digital Smile Innovations, iDeaHub, and Right Team Provider workspace selection and management",
+    "Profiles, account controls, personal time-zone/theme settings, in-app notifications, additional deliverables, and comments",
+    "Stages 1 through 8 from notes/add-features.docx, except host-domain-dependent email and evidence-image delivery"
+  ],
   "excluded": [
     "Git metadata/history",
     "node_modules",
@@ -21,5 +27,5 @@
     "local and production databases",
     "hosted progress and complete audit history"
   ],
-  "migration_status": "Company hosting, company auth/RBAC, full-data import and AI reporting are not implemented by this export."
+  "migration_status": "This checkout implements local authentication and role checks. Company SSO, production account provisioning, a host domain and email/image delivery services, full hosted-data import, and AI reporting are not implemented."
 }

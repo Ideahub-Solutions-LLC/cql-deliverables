@@ -21,15 +21,15 @@ This package gives IdeaHub's technical team the application source and a concret
 - Current Worker API, D1 schema/migration, UI components, assets and dependency lockfile.
 - The Excel tracker, PDF execution map, CSV task list and two PNG diagrams under `public/downloads/`.
 - Deployment, migration, access-control and AI reporting requirements under `docs/`.
-- A source provenance record and SHA-256 file manifest.
+- The original source provenance record and export SHA-256 manifest, plus handoff and access-control documentation.
 
 ## Current implementation versus migration work
 
 | Included today | Work for the technical team |
 | --- | --- |
 | Vinext/Vite React app running as a Cloudflare Worker | Company production hosting and domain |
-| Platform-provided ChatGPT identity | Company SSO/session verification and staff onboarding |
-| Shared data in Cloudflare D1 | Company-controlled database and complete data migration |
+| App-owned sign-in, disabled-by-default signup, profile updates and Admin/Reviewer account controls | Company SSO/session verification and production onboarding |
+| Workspace-scoped D1 projects, additional DSI deliverables, comments and in-app alerts | Company-controlled database and complete data migration |
 | Recorded reviewer name and signed-in editor audit | Server-enforced staff, reviewer, administrator and agent permissions |
 | Manual daily business results | Later verified CQL integration and AI report submission |
 | Current-state export plus latest 150 audit events | Full historical export/import and tested backups |
@@ -38,17 +38,17 @@ This package gives IdeaHub's technical team the application source and a concret
 
 ## Provenance
 
-The source was exported from the published application at commit `acf4a6c9b6af7d262984ba977bbc78f5e2c453d3` (version 1).
+The source baseline was exported from the published application at commit `acf4a6c9b6af7d262984ba977bbc78f5e2c453d3` (version 1). This working checkout includes subsequent local account, workspace, profile, deliverable, notification, and comment features described in `docs/ACCESS_CONTROL.md` and `docs/DEPLOYMENT_HANDOFF.md`.
 
 Reference application: https://dsi-daily-delivery-oct-dec-2026.ideahub-9058.chatgpt.site
 
-The application code in this export is unchanged from that commit. Export-only changes: this handoff README replaces the starter README; the original is preserved as `README_PLATFORM_BASELINE.md`; the original managed Site `project_id` is removed from `.openai/hosting.json` to prevent accidental reuse; handoff documents and provenance are added. The D1 binding declaration remains for local inspection.
+The original managed Site `project_id` is removed from `.openai/hosting.json` to prevent accidental reuse. The original starter README is preserved as `README_PLATFORM_BASELINE.md`; handoff documents and provenance are included. The D1 binding declaration remains for local inspection.
 
 Credentials, Git metadata/history, `node_modules`, generated builds, local tool state and local/production databases are not included. The archive does not contain hosted task updates made after publication. Existing vendor license files are retained.
 
 ## Local inspection
 
-Use Node.js at least `22.13.0` as declared in the supplied package. Begin with the lockfile and the documented portable workflow in `docs/DEPLOYMENT_HANDOFF.md`. Revalidate dependencies and production settings on the team's chosen target platform.
+Use Node.js at least `22.13.0` as declared in the supplied package. Begin with the lockfile and the documented portable workflow in `docs/DEPLOYMENT_HANDOFF.md`. Local login and role provisioning are documented in `docs/ACCESS_CONTROL.md`. Revalidate identity, dependencies and production settings on the team's chosen target platform.
 
 ## Success criteria
 

@@ -30,8 +30,8 @@ Return within one business day: repository URL, chosen hosting path, target host
 | Node requirement | `>=22.13.0` in package.json |
 | Data store | Cloudflare D1, binding `DB`; schema managed with Drizzle |
 | Plan | 494 tasks, 21 gates, 58 dates, 13 people/roles; one DSI project |
-| Authentication | Sites platform identity headers and hosted access policy |
-| Current permissions | Authenticated admitted users may update records; approval is recorded but not restricted to Wyline's authenticated account |
+| Authentication | App-owned account sessions in this checkout; company identity and production account provisioning remain deployment work |
+| Current permissions | Server-enforced account roles; accepting reviewer is taken from the authenticated account |
 | Current reporting | Manual daily new counts; no automatic CQL connection or AI ingestion API |
 | Refresh | Client polls shared state every 60 seconds; manual refresh is available |
 
@@ -47,7 +47,7 @@ The package is a source export, not a full historical data backup. The source pl
 | `app/delivery-components.tsx` | Edit forms and reusable presentation components |
 | `lib/delivery.ts` | Core validation and independent milestone requirements |
 | `app/api/state/route.ts` | Direct D1 queries, identity check, current-state loading and versioned writes |
-| `app/chatgpt-auth.ts` | Current platform identity/header reader; must be adapted for self-hosting |
+| `app/login/`, `app/api/auth/`, `lib/auth.ts` | Local sign-in, D1 sessions, password verification and role checks; production identity still needs company review |
 | `db/schema.ts`, `db/index.ts`, `drizzle/` | Schema, database binding and migration inputs |
 | `worker/index.ts`, `vite.config.ts` | Worker entrypoint and platform-specific build bindings |
 | `package.json`, `package-lock.json` | Pinned baseline dependencies and existing commands |
@@ -79,10 +79,15 @@ These commands inspect the supplied Worker application. They are not production 
 npm run install:ci
 npm run build
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_brief_taskmaster.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0001_accounts_and_sessions.sql
+npm run accounts:seed -- notes/credential.docx
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0002_workspaces_and_projects.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0003_profiles_tasks_comments_notifications.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0004_task_owner_account.sql
 npm run dev
 ```
 
-Apply the migration once to a fresh local database; inspect existing migration state before rerunning it. A clean external checkout selects the portable profile. Its development sign-in is a loopback-only mock described in `README_PLATFORM_BASELINE.md`. Use it only on localhost for UI inspection. The local `.wrangler` database is not the hosted production database.
+Apply each migration once to a fresh local database; inspect existing migration state before rerunning them. Create the ignored JSON account file as described in `docs/ACCESS_CONTROL.md`. A clean external checkout does not include user passwords or the local `.wrangler` database. Use the development server only on localhost for UI inspection. The local database and account seeder are not production identity provisioning.
 
 The existing `npm start` runs Wrangler's built local preview. Do not run it with PM2 or expose it as the intended production server. Do not use a static-only upload or GitHub Pages for the current full application; shared saves require a backend and persistent database.
 
@@ -120,17 +125,19 @@ References: https://developers.cloudflare.com/workers/configuration/routing/cust
 
 ## 6. Staff sign-in and enforceable responsibilities
 
-**Current boundary:** `getChatGPTUser()` reads `oai-authenticated-user-id` and email headers trusted only because the current hosting platform provides them. On a self-hosted public server, do not accept arbitrary client-supplied identity headers. Verify a server session or signed identity claims, and close direct-origin bypasses when using an identity proxy.
+**Current boundary:** this checkout uses password hashes in `delivery_users` and hashed random session tokens in `delivery_sessions`. It has no company SSO, self-service recovery, rate-limited account provisioning or production account-import process. Do not expose this local credential setup as the company's production identity system. Use company-approved identity and protect the origin before public rollout.
 
-**Current approval limit:** `acceptedBy` records a selected name; the current API separately logs the signed-in editor. It does not enforce that only Wyline can accept work. Implement account-bound authorization before the wider company rollout and before enabling agent writes.
+**Current approval limit:** acceptance and reopening are checked by role on the server, and the recorded reviewer comes from the session account. The company production release still needs reviewed account provisioning, delegation administration and acceptance evidence.
 
 | Role | Required company-deployment permission |
 | --- | --- |
 | Staff | View the assigned project; update assigned tasks, evidence and blockers; submit for review |
 | Wyline / delegated reviewer | Accept or return work; verify milestones/results; assign recovery; review delegation explicitly |
-| Technical administrator | Manage infrastructure, roster and permissions; approval privilege is separate |
+| Technical administrator | In this local credential set, only the explicitly full-control Admin accounts also review work. For company deployment, infrastructure administration and approval must be granted separately unless the account is expressly authorized for both. |
 | Read-only stakeholder | View permitted project reports; no mutation |
 | AI service account (later) | Submit scoped proposed reports; no human approval or administrative permission |
+
+The account-to-role mapping and the credential document's Ludwig/Admin discrepancy are recorded in `docs/ACCESS_CONTROL.md` without storing passwords in source. The current seeder targets local D1 only.
 
 Map each staff account to the plan's person ID. Display-name selection is not authorization. Add roster administration; the current application does not have a roster editor. Name Setter 1 and Setter 2 with Nova/Wyline. Use the existing company identity provider where practical so staff can sign in with company-approved accounts without depending on membership in this ChatGPT workspace.
 
@@ -154,7 +161,7 @@ The current UI's **Current snapshot** includes latest task/gate/metric state and
 
 Store timestamps in UTC and derive business reporting dates using `America/Los_Angeles`, including the daylight-saving transition. The live app uses **daily new results**. The Excel workbook uses **cumulative snapshots** and does not synchronize with the app. Missing data stays unknown; zero means a measured zero. Referral/LinkedIn bookings remain subsets of the total.
 
-The current schema is a single DSI project. If expanding into a general project platform, add `project_id` to records, scopes, queries and unique keys; enforce project isolation before adding another client's data.
+Stages 1–8 add the Digital Smile Innovations, iDeaHub, and Right Team Provider workspaces; workspace selection/creation; profile and access management; time-zone and theme preferences; in-app notifications; additional deliverables; drag-and-drop stage updates; and author-controlled comments. The existing delivery tracker remains operational only within Digital Smile Innovations; other workspace projects are metadata records at this stage. Images inside evidence/notes and email notifications are waiting on a host domain and the related storage/mail services. Before extending task tracking to other workspaces, add project scoping to task records, events, comments, notifications, queries and unique keys, and verify isolation before adding another client's data.
 
 ## 8. First release acceptance
 

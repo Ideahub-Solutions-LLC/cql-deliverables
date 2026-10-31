@@ -5,8 +5,8 @@ export const metadata: Metadata = {
   title: "DSI Daily Delivery | IdeaHub",
   description: "One plan, clear owners, visible progress. DSI reset execution from October 22 to December 18, 2026.",
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
+    icon: "/ideahub-icon.png",
+    shortcut: "/ideahub-icon.png",
   },
 };
 
