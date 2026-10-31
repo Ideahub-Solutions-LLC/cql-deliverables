@@ -10,7 +10,9 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SOURCE = (ROOT / (sys.argv[1] if len(sys.argv) > 1 else "notes/credential.docx")).resolve()
+REMOTE = "--remote" in sys.argv
+SOURCE_ARG = next((arg for arg in sys.argv[1:] if not arg.startswith("--")), "notes/credential.docx")
+SOURCE = (ROOT / SOURCE_ARG).resolve()
 PRIVATE_DIR = ROOT / "notes"
 NAMESPACE = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
 
@@ -77,7 +79,10 @@ def main():
         with os.fdopen(descriptor, "w", encoding="utf-8") as account_file:
             json.dump(accounts, account_file)
         os.chmod(PRIVATE_JSON, 0o600)
-        subprocess.run(["node", "scripts/seed-accounts.mjs", str(PRIVATE_JSON.relative_to(ROOT))], cwd=ROOT, check=True)
+        command = ["node", "scripts/seed-accounts.mjs", str(PRIVATE_JSON.relative_to(ROOT))]
+        if REMOTE:
+            command.append("--remote")
+        subprocess.run(command, cwd=ROOT, check=True)
     finally:
         PRIVATE_JSON.unlink(missing_ok=True)
 

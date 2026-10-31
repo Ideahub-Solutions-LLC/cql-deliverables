@@ -5,7 +5,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const inputPath = path.resolve(root, process.argv[2] || "notes/accounts.local.json");
+const remote = process.argv.includes("--remote");
+const input = process.argv.slice(2).find((value) => !value.startsWith("--"));
+const inputPath = path.resolve(root, input || "notes/accounts.local.json");
 const outputPath = path.join(root, ".wrangler", "state", "dsi-users-seed.sql");
 const roles = new Set(["admin", "reviewer", "staff", "delegated_reviewer", "viewer"]);
 const iterations = 310_000;
@@ -41,12 +43,12 @@ try {
   const result = spawnSync(process.execPath, [
     "--import", "./scripts/sites-env.mjs",
     path.join(root, "node_modules", "wrangler", "bin", "wrangler.js"),
-    "d1", "execute", "DB", "--local", "--config", "dist/server/wrangler.json",
-    "--persist-to", ".wrangler/state", "--file", path.relative(root, outputPath),
+    "d1", "execute", "DB", remote ? "--remote" : "--local", "--config", "dist/server/wrangler.json",
+    ...(remote ? [] : ["--persist-to", ".wrangler/state"]), "--file", path.relative(root, outputPath),
   ], { cwd: root, stdio: "inherit" });
   if (result.error) throw result.error;
   if (result.status !== 0) process.exitCode = result.status ?? 1;
-  else process.stdout.write(`Provisioned ${accounts.length} project accounts in the local D1 database. Passwords were hashed before storage.\n`);
+  else process.stdout.write(`Provisioned ${accounts.length} project accounts in the ${remote ? "remote Cloudflare" : "local"} D1 database. Passwords were hashed before storage.\n`);
 } finally {
   rmSync(outputPath, { force: true });
 }
