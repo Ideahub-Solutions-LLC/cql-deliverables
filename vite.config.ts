@@ -6,7 +6,7 @@ import { configureToolEnvironment } from "./scripts/tool-environment.mjs";
 import { sites } from "./scripts/vite/sites-vite-plugin";
 import { connectorPreview } from "./scripts/vite/connector-preview-plugin.mjs";
 
-const CLOUDFLARE_ACCOUNT_ID = "29e9c523414392d405ca4243ad7d9121";
+const CLOUDFLARE_ACCOUNT_ID = "530f0c13ec55aa63648b69af26cf116c";
 const CLOUDFLARE_D1_DATABASE_ID = "1e509779-b6b0-483c-bc14-18ca5772697b";
 
 const { d1, r2 } = hostingConfig;
