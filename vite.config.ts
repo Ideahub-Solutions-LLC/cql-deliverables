@@ -7,7 +7,7 @@ import { sites } from "./scripts/vite/sites-vite-plugin";
 import { connectorPreview } from "./scripts/vite/connector-preview-plugin.mjs";
 
 const CLOUDFLARE_ACCOUNT_ID = "530f0c13ec55aa63648b69af26cf116c";
-const CLOUDFLARE_D1_DATABASE_ID = "1e509779-b6b0-483c-bc14-18ca5772697b";
+const CLOUDFLARE_D1_DATABASE_ID = "6637e97e-ab70-44f5-80c4-8f7098b728a0";
 
 const { d1, r2 } = hostingConfig;
 
