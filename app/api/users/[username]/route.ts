@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { getAuthenticatedUser } from "../../../../lib/auth";
+import { getAuthenticatedUser, PASSWORD_ITERATIONS, passwordDigest, randomHex } from "../../../../lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +13,25 @@ export async function PATCH(request: Request, context: { params: Promise<{ usern
   try { body = await request.json(); } catch { return Response.json({ error: "Review the account changes." }, { status: 400 }); }
   const target = await env.DB!.prepare("SELECT username, active FROM delivery_users WHERE username=?").bind(username).first<{username:string;active:number}>();
   if (!target) return Response.json({ error: "Account not found." }, { status: 404 });
+  if ((body.role !== undefined || body.newPassword !== undefined) && actor.role !== "admin") return Response.json({ error: "Only an administrator can change roles or reset passwords." }, { status: 403 });
+  if (body.role !== undefined) {
+    const roles = ["admin", "reviewer", "staff", "delegated_reviewer", "viewer"];
+    if (!roles.includes(body.role)) return Response.json({ error: "Choose a valid account role." }, { status: 400 });
+    if (username === actor.username && body.role !== "admin") return Response.json({ error: "You cannot remove your own administrator role." }, { status: 400 });
+    if (target.active && body.role !== "admin") {
+      const admins = await env.DB!.prepare("SELECT COUNT(*) AS count FROM delivery_users WHERE role='admin' AND active=1").first<{count:number}>();
+      const targetRole = await env.DB!.prepare("SELECT role FROM delivery_users WHERE username=?").bind(username).first<{role:string}>();
+      if (targetRole?.role === "admin" && (admins?.count ?? 0) <= 1) return Response.json({ error: "The workspace must keep at least one enabled administrator." }, { status: 400 });
+    }
+    await env.DB!.prepare("UPDATE delivery_users SET role=? WHERE username=?").bind(body.role, username).run();
+  }
+  if (body.newPassword !== undefined) {
+    const next = typeof body.newPassword === "string" ? body.newPassword : "";
+    if (next.length < 12 || next.length > 256 || !/[a-z]/.test(next) || !/[A-Z]/.test(next) || !/\d/.test(next) || !/[^A-Za-z0-9]/.test(next)) return Response.json({ error: "Generate a strong password with at least 12 characters, upper and lower case letters, a number, and a symbol." }, { status: 400 });
+    const salt = randomHex(16), hash = await passwordDigest(next, salt, PASSWORD_ITERATIONS);
+    await env.DB!.prepare("UPDATE delivery_users SET password_salt=?, password_hash=?, password_iterations=? WHERE username=?").bind(salt, hash, PASSWORD_ITERATIONS, username).run();
+    await env.DB!.prepare("DELETE FROM delivery_sessions WHERE username=?").bind(username).run();
+  }
   if (body.active !== undefined) {
     if (body.active === 0 && target.username === actor.username) return Response.json({ error: "You cannot disable your own account." }, { status: 400 });
     if (body.active !== 0 && body.active !== 1) return Response.json({ error: "Choose enable or disable." }, { status: 400 });

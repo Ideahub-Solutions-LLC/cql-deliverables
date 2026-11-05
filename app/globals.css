@@ -36,3 +36,5 @@ html[data-theme="dark"] body,html[data-theme="dark"] .workspace-page{background:
 .sidebar-workspace-switcher{margin:-18px 0 18px;padding:9px 10px;border:1px solid #ffffff18;border-radius:8px;background:#ffffff08}.sidebar-workspace-switcher .workspace-switcher{width:100%;gap:7px;color:#b8accb}.sidebar-workspace-switcher .workspace-switcher>svg{color:#b8accb}.sidebar-workspace-switcher .workspace-switcher-select-wrap{flex:1;min-width:0}.sidebar-workspace-switcher .workspace-switcher select{width:100%;max-width:none;border-color:#ffffff20;background:#302744;color:#f3eef8}.sidebar-workspace-switcher .workspace-switcher-select-wrap>svg{color:#c7bfd6}
 @media(max-width:760px){.mobile-workspace-switcher{display:inline-flex;margin-left:8px}.mobile-workspace-switcher .workspace-switcher{gap:4px}.mobile-workspace-switcher .workspace-switcher-select-wrap{min-width:85px}.mobile-workspace-switcher .workspace-switcher select{max-width:125px;height:28px;font-size:9px}}
 
+
+html[data-theme="dark"] .managed-password{border-color:#393241}html[data-theme="dark"] .managed-password input{background:#1b1822;color:#e7dfec;border-color:#403748}
