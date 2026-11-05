@@ -9,6 +9,9 @@ const remote = process.argv.includes("--remote");
 const input = process.argv.slice(2).find((value) => !value.startsWith("--"));
 const inputPath = path.resolve(root, input || "notes/accounts.local.json");
 const outputPath = path.join(root, ".wrangler", "state", "dsi-users-seed.sql");
+const localDevConfig = path.join(root, ".wrangler", "local-dev-db.json");
+const configPath = process.env.SITES_D1_CONFIG ||
+  (!remote && existsSync(localDevConfig) ? ".wrangler/local-dev-db.json" : "dist/server/wrangler.json");
 const roles = new Set(["admin", "reviewer", "staff", "delegated_reviewer", "viewer"]);
 const iterations = 310_000;
 
@@ -57,7 +60,7 @@ try {
   const result = spawnSync(process.execPath, [
     "--import", "./scripts/sites-env.mjs",
     path.join(root, "node_modules", "wrangler", "bin", "wrangler.js"),
-    "d1", "execute", "DB", remote ? "--remote" : "--local", "--config", "dist/server/wrangler.json",
+    "d1", "execute", "DB", remote ? "--remote" : "--local", "--config", configPath,
     ...(remote ? [] : ["--persist-to", ".wrangler/state"]), "--file", path.relative(root, outputPath),
   ], { cwd: root, stdio: "inherit" });
   if (result.error) throw result.error;
