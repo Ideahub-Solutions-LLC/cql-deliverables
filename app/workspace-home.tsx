@@ -56,7 +56,7 @@ export default function WorkspaceHome({
       <header className="workspace-topbar">
         <a className="workspace-brand" href="/" aria-label="Workspace home">
           <img className="workspace-brand-logo" src="/ideahub-icon.png" alt="iDeaHub"/>
-          <span><strong>Daily Delivery</strong><small>IDEAHUB × DSI</small></span>
+          <span><strong>Daily Delivery</strong><small>IDEAHUB</small></span>
         </a>
         <DashboardTools user={user}/>
       </header>

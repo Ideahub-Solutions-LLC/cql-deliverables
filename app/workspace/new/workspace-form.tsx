@@ -37,7 +37,7 @@ export default function AddWorkspaceForm({ displayName, roleName }: { displayNam
   return (
     <main className="workspace-page">
       <header className="workspace-topbar">
-        <a className="workspace-brand" href="/" aria-label="Workspace dashboard"><img className="workspace-brand-logo" src="/ideahub-icon.png" alt="iDeaHub"/><span><strong>Daily Delivery</strong><small>IDEAHUB × DSI</small></span></a>
+        <a className="workspace-brand" href="/" aria-label="Workspace dashboard"><img className="workspace-brand-logo" src="/ideahub-icon.png" alt="iDeaHub"/><span><strong>Daily Delivery</strong><small>IDEAHUB</small></span></a>
         <div className="workspace-account"><span className="workspace-avatar">{displayName.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase()}</span><span><strong>{displayName}</strong><small>{roleName}</small></span><button onClick={signOut} aria-label="Sign out" title="Sign out"><LogOut size={16} /></button></div>
       </header>
       <section className="workspace-content">

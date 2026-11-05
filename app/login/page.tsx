@@ -21,7 +21,7 @@ export default async function LoginPage() {
       <section className="login-panel" aria-labelledby="login-title">
         <div className="login-brand">
           <img className="login-mark-image" src="/ideahub-icon.png" alt="iDeaHub"/>
-          <div><strong>Daily Delivery</strong><small>IDEAHUB × DSI</small></div>
+          <div><strong>Daily Delivery</strong><small>IDEAHUB</small></div>
         </div>
         <div className="login-copy">
           <span className="login-kicker">TEAM WORKSPACE</span>
