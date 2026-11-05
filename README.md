@@ -1,6 +1,4 @@
-# DSI Daily Delivery - technical handoff
-
-**Planning date: October 22, 2026. Business owner: Wyline.**
+# PMS - technical handoff
 
 This package gives IdeaHub's technical team the application source and a concrete migration brief for company-controlled hosting, a company URL, staff sign-in, and a later AI employee reporting extension.
 
