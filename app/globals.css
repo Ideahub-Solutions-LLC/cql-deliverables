@@ -20,3 +20,15 @@ html[data-theme="dark"] body,html[data-theme="dark"] .workspace-page{background:
 .nav-admin-link{display:flex;align-items:center;gap:12px;width:100%;margin-top:10px;padding:11px 13px;border-top:1px solid #ffffff0d;background:transparent;color:#c5b6d5;text-align:left;font-size:11px}.nav-admin-link:hover{color:#fff;background:#ffffff08}.field-links{display:flex;flex-direction:column;gap:4px;margin:5px 0 8px}.field-links a{overflow-wrap:anywhere;color:#74539a;font-size:9px;text-decoration:underline}.managed-user-avatar img{width:100%;height:100%;object-fit:cover}.managed-avatar-upload input{font-size:8px!important;padding:4px!important;border:0!important}.signup-link:hover,.profile-links a:hover{color:#513374}
 .theme-options input[type=radio]{width:15px;height:15px;flex:none;accent-color:var(--purple)}.theme-options label{display:flex;flex-direction:row;align-items:center}
 .workspace-brand-logo{width:31px;height:46px;flex:none;object-fit:contain;padding:2px;border-radius:5px;background:#29203e}.login-mark-image{width:35px;height:52px;flex:none;object-fit:contain;padding:2px;border-radius:5px;background:#29203e}.console-brand-logo{width:31px;height:47px;flex:none;object-fit:contain}.workspace-brand{gap:12px}.brand{align-items:center}.brand strong{display:block}
+
+/* Stage 1 revision: signed-in user card + in-dashboard user list */
+.owner-card>div{min-width:0}
+.owner-card strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.owner-avatar-image{object-fit:cover;background:#ffffff14}
+.nav-admin-link.active{background:linear-gradient(105deg,#7651b4,#66429f);color:#fff;border-radius:8px;border-top-color:transparent;box-shadow:0 5px 14px #13092225}
+.nav-admin-link i{width:5px;height:5px;background:#dcd0f4;border-radius:50%;margin-left:auto}
+.users-view{margin-top:4px}
+.user-directory-summary{margin-left:auto;color:#94889d;font-size:10px}
+.user-directory-note{padding:18px;color:#8c7e9c;font-size:11px}
+.user-directory-you{color:#94889d;font-style:normal;font-weight:500}
+.user-directory-saved{display:inline-flex;align-items:center;gap:4px;margin-right:auto;color:#348463;font-size:9px}
