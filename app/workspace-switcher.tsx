@@ -16,7 +16,8 @@ export default function WorkspaceSwitcher({
   canAdd: boolean;
   compact?: boolean;
 }) {
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([{ id: workspaceId, name: workspaceName }]);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>(workspaceId ? [{ id: workspaceId, name: workspaceName }] : []);
+  const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -31,7 +32,8 @@ export default function WorkspaceSwitcher({
       window.location.assign("/workspace/new");
       return;
     }
-    if (!value || value === workspaceId) return;
+    if (value === workspaceId) return;
+    setError("");
     setBusy(true);
     try {
       const response = await fetch("/api/auth/workspace", {
@@ -43,6 +45,7 @@ export default function WorkspaceSwitcher({
       if (!response.ok) throw new Error("Could not switch workspace.");
       window.location.assign("/");
     } catch {
+      setError("Could not switch workspace. Try again.");
       setBusy(false);
     }
   }
@@ -53,11 +56,13 @@ export default function WorkspaceSwitcher({
       {!compact && <span className="workspace-switcher-label">Workspace</span>}
       <span className="workspace-switcher-select-wrap">
         <select aria-label="Switch workspace" value={workspaceId} disabled={busy} onChange={(event) => choose(event.target.value)}>
+          <option value="">Choose a workspace</option>
           {canAdd && <option value="__add__">＋ Add workspace</option>}
           {workspaces.map((workspace) => <option key={workspace.id} value={workspace.id}>{workspace.name}</option>)}
         </select>
         <ChevronDown size={13} aria-hidden="true" />
       </span>
+      {error && <small role="alert">{error}</small>}
     </label>
   );
 }

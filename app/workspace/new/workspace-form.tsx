@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, Building2, LogOut, Plus } from "lucide-react";
+import { ArrowLeft, Building2, Plus } from "lucide-react";
 import "../../workspace.css";
 
-export default function AddWorkspaceForm({ displayName, roleName }: { displayName: string; roleName: string }) {
+export default function AddWorkspaceForm() {
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -20,7 +20,7 @@ export default function AddWorkspaceForm({ displayName, roleName }: { displayNam
         credentials: "same-origin",
         body: JSON.stringify({ name }),
       });
-      const result:any = await response.json();
+      const result: { error?: string } = await response.json();
       if (!response.ok) throw new Error(result.error || "Could not add this workspace.");
       window.location.assign("/");
     } catch (cause) {
@@ -29,17 +29,8 @@ export default function AddWorkspaceForm({ displayName, roleName }: { displayNam
     }
   }
 
-  async function signOut() {
-    await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
-    window.location.assign("/login");
-  }
-
   return (
-    <main className="workspace-page">
-      <header className="workspace-topbar">
-        <a className="workspace-brand" href="/" aria-label="Workspace dashboard"><img className="workspace-brand-logo" src="/ideahub-icon.png" alt="iDeaHub"/><span><strong>Daily Delivery</strong><small>IDEAHUB</small></span></a>
-        <div className="workspace-account"><span className="workspace-avatar">{displayName.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase()}</span><span><strong>{displayName}</strong><small>{roleName}</small></span><button onClick={signOut} aria-label="Sign out" title="Sign out"><LogOut size={16} /></button></div>
-      </header>
+    <div className="dashboard-account-content">
       <section className="workspace-content">
         <div className="workspace-context"><Building2 size={16} /><span>Dashboard</span><b>Add workspace</b></div>
         <button className="workspace-back" onClick={() => window.location.assign("/")}><ArrowLeft size={15} />Back to dashboard</button>
@@ -51,6 +42,6 @@ export default function AddWorkspaceForm({ displayName, roleName }: { displayNam
           <div><button type="button" className="workspace-cancel" onClick={() => window.location.assign("/")}>Cancel</button><button className="workspace-add-button" disabled={busy || name.trim().length < 2}>{busy ? "Adding…" : <><Plus size={16} />Add workspace</>}</button></div>
         </form>
       </section>
-    </main>
+    </div>
   );
 }

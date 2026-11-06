@@ -2,7 +2,6 @@ import { env } from "cloudflare:workers";
 import {
   PASSWORD_ITERATIONS,
   SESSION_SECONDS,
-  SESSION_COOKIE,
   passwordDigest,
   randomHex,
   sessionCookie,
@@ -21,7 +20,7 @@ export async function POST(request: Request) {
   }
   if (!env.DB) return Response.json({ error: "Sign-in is not configured on this environment." }, { status: 503 });
 
-  let body: { username?: unknown; password?: unknown; workspaceId?: unknown };
+  let body: { username?: unknown; password?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -29,14 +28,11 @@ export async function POST(request: Request) {
   }
   const username = typeof body.username === "string" ? body.username.trim().toLowerCase() : "";
   const password = typeof body.password === "string" ? body.password : "";
-  const workspaceId = typeof body.workspaceId === "string" ? body.workspaceId : "";
-  if (!/^[a-z0-9_.-]{2,40}$/.test(username) || password.length < 1 || password.length > 256 || !/^[a-z0-9-]{2,64}$/.test(workspaceId)) {
+  if (!/^[a-z0-9_.-]{2,40}$/.test(username) || password.length < 1 || password.length > 256) {
     await passwordDigest(password.slice(0, 256), dummySalt, PASSWORD_ITERATIONS);
     return Response.json({ error: "The username or password is incorrect." }, { status: 401 });
   }
 
-  const workspace = await env.DB!.prepare("SELECT id, name FROM workspaces WHERE id = ? AND active = 1")
-    .bind(workspaceId).first<{ id: string; name: string }>();
 
   const account = await env.DB!.prepare(
     "SELECT username, display_name, role, password_salt, password_hash, password_iterations, active FROM delivery_users WHERE username = ?",
@@ -53,7 +49,7 @@ export async function POST(request: Request) {
   const matches = account
     ? await verifyPassword(password, account.password_salt, account.password_hash, account.password_iterations)
     : (await passwordDigest(password, dummySalt, PASSWORD_ITERATIONS)) === dummyHash;
-  if (!workspace || !account || !account.active || !matches) {
+  if (!account || !account.active || !matches) {
     return Response.json({ error: "The username or password is incorrect." }, { status: 401 });
   }
 
@@ -63,11 +59,11 @@ export async function POST(request: Request) {
   await env.DB!.batch([
     env.DB!.prepare("DELETE FROM delivery_sessions WHERE expires_at <= ?").bind(now.toISOString()),
     env.DB!.prepare("INSERT INTO delivery_sessions (token_hash, username, workspace_id, expires_at, created_at) VALUES (?, ?, ?, ?, ?)")
-      .bind(await sha256Hex(token), account.username, workspace.id, expiresAt, now.toISOString()),
+      .bind(await sha256Hex(token), account.username, null, expiresAt, now.toISOString()),
   ]);
 
   return Response.json(
-    { user: { username: account.username, displayName: account.display_name, role: account.role, workspace: { id: workspace.id, name: workspace.name } } },
+    { user: { username: account.username, displayName: account.display_name, role: account.role, workspace: null } },
     { headers: { "Cache-Control": "no-store", "Set-Cookie": sessionCookie(token, request.url) } },
   );
 }

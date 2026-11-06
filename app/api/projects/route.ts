@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const user = await getAuthenticatedUser();
   if (!user) return Response.json({ error: "Sign in to view workspace projects." }, { status: 401 });
+  if (!user.workspaceId) return Response.json({ error: "Choose a workspace first." }, { status: 400 });
   if (!env.DB) return Response.json({ error: "Workspace projects are not configured." }, { status: 503 });
   const result = await env.DB!.prepare(
     "SELECT id, name, created_at AS createdAt FROM workspace_projects WHERE workspace_id = ? ORDER BY created_at, name",
@@ -23,6 +24,7 @@ export async function POST(request: Request) {
   if (origin && new URL(origin).origin !== new URL(request.url).origin) {
     return Response.json({ error: "Cross-origin project changes are not allowed." }, { status: 403 });
   }
+  if (!user.workspaceId) return Response.json({ error: "Choose a workspace first." }, { status: 400 });
   if (!env.DB) return Response.json({ error: "Workspace projects are not configured." }, { status: 503 });
   let body: { name?: unknown };
   try {

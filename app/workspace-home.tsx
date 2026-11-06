@@ -3,19 +3,21 @@
 import { useState } from "react";
 import { ArrowLeft, ArrowUpRight, Building2, FolderKanban, Plus, Sparkles } from "lucide-react";
 import type { AuthenticatedUser } from "../lib/auth";
-import WorkspaceSwitcher from "./workspace-switcher";
-import DashboardTools from "./dashboard-tools";
+import DashboardShell from "./dashboard-shell";
 import "./workspace.css";
 
 type WorkspaceProject = { id: string; name: string; createdAt: string };
+type WorkspaceOption = { id: string; name: string };
 
 export default function WorkspaceHome({
   workspaceName,
+  workspaces = [],
   projects: initialProjects,
   user,
   selectedProject = null,
 }: {
   workspaceName: string;
+  workspaces?: WorkspaceOption[];
   projects: WorkspaceProject[];
   user: AuthenticatedUser;
   selectedProject?: WorkspaceProject | null;
@@ -38,10 +40,11 @@ export default function WorkspaceHome({
         credentials: "same-origin",
         body: JSON.stringify({ name }),
       });
-      const result:any = await response.json();
-      if (!response.ok) throw new Error(result.error || "Could not add this project.");
-      setProjects((current) => [...current, result.project].sort((a, b) => a.name.localeCompare(b.name)));
-      setActiveProject(result.project);
+      const result = (await response.json()) as { error?: string; project?: WorkspaceProject };
+      const project = result.project;
+      if (!response.ok || !project) throw new Error(result.error || "Could not add this project.");
+      setProjects((current) => [...current, project].sort((a, b) => a.name.localeCompare(b.name)));
+      setActiveProject(project);
       setName("");
       setAdding(false);
     } catch (cause) {
@@ -52,17 +55,8 @@ export default function WorkspaceHome({
   }
 
   return (
-    <main className="workspace-page">
-      <header className="workspace-topbar">
-        <a className="workspace-brand" href="/" aria-label="Workspace home">
-          <img className="workspace-brand-logo" src="/ideahub-icon.png" alt="iDeaHub"/>
-          <span><strong>Daily Delivery</strong><small>IDEAHUB</small></span>
-        </a>
-        <DashboardTools user={user}/>
-      </header>
-
+    <DashboardShell user={user} workspaceName={workspaceName} workspaceTree workspaceList={workspaces} workspaceProjects={projects}>
       <section className="workspace-content">
-        <div className="workspace-context"><WorkspaceSwitcher workspaceId={user.workspaceId} workspaceName={workspaceName} canAdd={canAddProject} /><span className="workspace-context-description">Dashboard projects</span></div>
         {activeProject ? (
           <>
             <button className="workspace-back" onClick={() => { setActiveProject(null); setError(""); }}><ArrowLeft size={15} />All projects</button>
@@ -116,6 +110,6 @@ export default function WorkspaceHome({
         )}
       </section>
       <footer className="workspace-footer">Only members of {workspaceName} can see its project list.</footer>
-    </main>
+    </DashboardShell>
   );
 }

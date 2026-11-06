@@ -106,14 +106,14 @@ export async function getAuthenticatedUser(request?: Request): Promise<Authentic
             u.email, u.first_name, u.last_name, u.avatar_data, u.timezone, u.theme_mode
      FROM delivery_sessions s
      JOIN delivery_users u ON u.username = s.username
-     JOIN workspaces w ON w.id = s.workspace_id AND w.active = 1
-     WHERE s.token_hash = ? AND s.expires_at > ? AND u.active = 1`,
+     LEFT JOIN workspaces w ON w.id = s.workspace_id AND w.active = 1
+     WHERE s.token_hash = ? AND s.expires_at > ? AND u.active = 1 AND (s.workspace_id IS NULL OR w.id IS NOT NULL)`,
   ).bind(tokenHash, new Date().toISOString()).first<{
     username: string;
     display_name: string;
     role: AccountRole;
     person_id: string | null;
-    workspace_id: string;
+    workspace_id: string | null;
     email: string | null;
     first_name: string;
     last_name: string;
@@ -128,7 +128,7 @@ export async function getAuthenticatedUser(request?: Request): Promise<Authentic
     displayName: row.display_name,
     role: row.role,
     personId: row.person_id,
-    workspaceId: row.workspace_id,
+    workspaceId: row.workspace_id ?? "",
     email: row.email,
     firstName: row.first_name,
     lastName: row.last_name,
