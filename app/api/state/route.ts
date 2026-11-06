@@ -3,9 +3,11 @@ import { canEditMetrics, canEditTask, canReview, getAuthenticatedUser } from "..
 import source from "../../data/plan.json";
 import { type Plan, type Task, gateTasks, validateTaskUpdate, validateMetrics } from "../../../lib/delivery";
 import { notifyMentions } from "../../../lib/mentions";
-const plan=source as unknown as Plan;
+import { eventScopeSql, LEGACY_PROJECT, projectInWorkspace } from "../../../lib/project-access";
+const legacyPlan=source as unknown as Plan;
+const emptyPlan: Plan={meta:{},people:[],phases:[],milestones:[],targets:[],calendar:[],tasks:[]};
 export const dynamic="force-dynamic";
-const latestSql=`SELECT e.* FROM delivery_events e INNER JOIN (SELECT entity_type, entity_id, MAX(version) AS v FROM delivery_events GROUP BY entity_type, entity_id) x ON e.entity_type=x.entity_type AND e.entity_id=x.entity_id AND e.version=x.v`;
+const latestSql=`SELECT e.* FROM delivery_events e INNER JOIN (SELECT entity_type, entity_id, MAX(version) AS v FROM delivery_events WHERE ${eventScopeSql} GROUP BY entity_type, entity_id) x ON e.entity_type=x.entity_type AND e.entity_id=x.entity_id AND e.version=x.v`;
 
 function decode(row:any) {return {id:row.id,entityType:row.entity_type,entityId:row.entity_id,version:row.version,payload:JSON.parse(row.payload),actorName:row.actor_name,at:row.at};}
 function failure(error:unknown) { console.error("Delivery store error",error instanceof Error?error.message:"unknown"); return Response.json({error:"The shared tracker could not save or load this change. Your entry has been kept on screen. Please retry."},{status:503}); }
@@ -13,18 +15,19 @@ function failure(error:unknown) { console.error("Delivery store error",error ins
 export async function GET(request: Request) {
   const user=await getAuthenticatedUser();
   if(!user) return Response.json({error:"Sign in to load and save shared progress."},{status:401});
-  if(user.workspaceId!=="digital-smile-innovations"||new URL(request.url).searchParams.get("projectId")!=="dsi-delivery-tracker") return Response.json({error:"This project is not available in the selected workspace."},{status:403});
+  const projectId=new URL(request.url).searchParams.get("projectId")||"";
+  if(!await projectInWorkspace(projectId,user.workspaceId)) return Response.json({error:"This project is not available in the selected workspace."},{status:403});
   try {
     if(!env.DB) throw new Error("Missing DB binding");
     const [latest,audit,deleted,custom]=await env.DB!.batch([
-      env.DB!.prepare(latestSql),
-      env.DB!.prepare("SELECT * FROM delivery_events ORDER BY at DESC LIMIT 150"),
-      env.DB!.prepare("SELECT entity_id FROM delivery_events WHERE entity_type='deleted_task'"),
-      env.DB!.prepare("SELECT d.*,u.username AS owner_username,u.display_name AS current_owner FROM delivery_tasks d LEFT JOIN delivery_users u ON u.username=d.owner_username WHERE d.project_id='dsi-delivery-tracker' AND d.deleted_at IS NULL"),
+      env.DB!.prepare(latestSql).bind(projectId,projectId),
+      env.DB!.prepare(`SELECT * FROM delivery_events WHERE ${eventScopeSql} ORDER BY at DESC LIMIT 150`).bind(projectId,projectId),
+      env.DB!.prepare(`SELECT entity_id FROM delivery_events WHERE entity_type='deleted_task' AND ${eventScopeSql}`).bind(projectId,projectId),
+      env.DB!.prepare("SELECT d.*,u.username AS owner_username,u.display_name AS current_owner FROM delivery_tasks d LEFT JOIN delivery_users u ON u.username=d.owner_username WHERE d.project_id=? AND d.deleted_at IS NULL").bind(projectId),
     ]);
     const overrides:Record<string,any>={},metrics:Record<string,any>={},milestones:Record<string,any>={};
     for(const raw of latest.results || []) {const e=decode(raw);if(e.entityType==="task")overrides[e.entityId]={...e.payload,version:e.version,updatedAt:e.at};else if(e.entityType==="milestone")milestones[e.entityId]={...e.payload,version:e.version,updatedAt:e.at};else if(e.entityType==="metrics")metrics[e.entityId]={...e.payload,version:e.version,updatedAt:e.at};}
-    const extraTasks=(custom.results||[]).map((row:any)=>({id:row.id,title:row.title,owner:row.current_owner,ownerUsername:row.owner_username,workstream:row.workstream,startDate:row.start_date,date:row.due_date,originalDueDate:row.due_date,dueTime:"17:00",deliverable:row.deliverable,acceptance:row.acceptance,target:row.target==null?null:Number(row.target),unit:row.unit,status:"Ready",actual:null,evidence:"",blocker:"",rescueOwner:"",recoveryDate:"",acceptedBy:"",closedAt:null,...overrides[row.id]}));
+    const extraTasks=(custom.results||[]).map((row:any)=>({id:row.id,title:row.title,owner:row.current_owner||row.owner,ownerUsername:row.owner_username,workstream:row.workstream,startDate:row.start_date,date:row.due_date,originalDueDate:row.due_date,dueTime:"17:00",deliverable:row.deliverable,acceptance:row.acceptance,target:row.target==null?null:Number(row.target),unit:row.unit,status:"Ready",actual:null,evidence:"",blocker:"",rescueOwner:"",recoveryDate:"",acceptedBy:"",closedAt:null,...overrides[row.id]}));
     return Response.json({overrides,metrics,milestones,extraTasks,deletedTaskIds:(deleted.results||[]).map((row:any)=>row.entity_id),audit:(audit.results||[]).map(decode),user:{name:user.displayName,role:user.role},syncedAt:new Date().toISOString()},{headers:{"Cache-Control":"no-store"}});
   } catch(error) { return failure(error); }
 }
@@ -37,10 +40,12 @@ export async function POST(request:Request) {
   try {
     if(!env.DB) throw new Error("Missing DB binding");
     const body:any=await request.json();
-    if(user.workspaceId!=="digital-smile-innovations"||body.projectId!=="dsi-delivery-tracker") return Response.json({error:"This project is not available in the selected workspace."},{status:403});
+    const projectId=typeof body.projectId==="string"?body.projectId:"";
+    if(!await projectInWorkspace(projectId,user.workspaceId)) return Response.json({error:"This project is not available in the selected workspace."},{status:403});
+    const plan=projectId===LEGACY_PROJECT?legacyPlan:emptyPlan;
     if(!["task","milestone","metrics"].includes(body.entityType) || typeof body.entityId!=="string") return Response.json({error:"Unknown record type."},{status:400});
     if(!Number.isInteger(body.version)||body.version<0) return Response.json({error:"Refresh to get the current record version."},{status:400});
-    const rows=await env.DB!.prepare(latestSql).all();
+    const rows=await env.DB!.prepare(latestSql).bind(projectId,projectId).all();
     const latest=(rows.results||[]).map(decode);
     const previous=latest.find(e=>e.entityType===body.entityType&&e.entityId===body.entityId);
     if((previous?.version||0)!==body.version) return Response.json({error:"Someone updated this record while you were editing. Refresh, review their change, then save again."},{status:409});
@@ -49,13 +54,14 @@ export async function POST(request:Request) {
       const work=[...plan.tasks,...gateTasks(plan)];
       let base:any=work.find(t=>t.id===body.entityId && (body.entityType==="task"?t.workstream!=="Delivery gate":t.workstream==="Delivery gate"));
       if(!base&&body.entityType==="task") {
-        const row=await env.DB!.prepare("SELECT d.*,u.username AS owner_username,u.person_id AS owner_person_id,u.display_name AS current_owner FROM delivery_tasks d LEFT JOIN delivery_users u ON u.username=d.owner_username WHERE d.id=? AND d.project_id='dsi-delivery-tracker' AND d.deleted_at IS NULL").bind(body.entityId).first<any>();
+        const row=await env.DB!.prepare("SELECT d.*,u.username AS owner_username,u.person_id AS owner_person_id,u.display_name AS current_owner FROM delivery_tasks d LEFT JOIN delivery_users u ON u.username=d.owner_username WHERE d.id=? AND d.project_id=? AND d.deleted_at IS NULL").bind(body.entityId,projectId).first<any>();
         if(row)base={id:row.id,date:row.due_date,originalDueDate:row.due_date,startDate:row.start_date,owner:row.current_owner||row.owner,ownerUsername:row.owner_username,ownerPersonId:row.owner_person_id,workstream:row.workstream,title:row.title,deliverable:row.deliverable,acceptance:row.acceptance,target:row.target==null?null:Number(row.target),unit:row.unit,status:"Ready",dependencies:[]};
       }
       if(!base) return Response.json({error:"This task is not in the active plan."},{status:404});
       if(body.entityType==="task"&&(await env.DB!.prepare("SELECT entity_id FROM delivery_events WHERE entity_type='deleted_task' AND entity_id=?").bind(body.entityId).first()))return Response.json({error:"This deliverable has been deleted."},{status:404});
+      base={...base,...previous?.payload};
       const ownerId=base.ownerPersonId||plan.people.find(person=>person.name===base.owner)?.id;
-      if(!(base.ownerUsername===user.username||canEditTask(user,ownerId||""))) return Response.json({error:"Your role can update only work assigned to you."},{status:403});
+      if(!((user.role==="staff"&&base.ownerUsername===user.username)||(projectId===LEGACY_PROJECT?canEditTask(user,ownerId||""):canReview(user.role)))) return Response.json({error:"Your role can update only work assigned to you."},{status:403});
       const isPrivileged=user.role==="admin"||user.role==="reviewer";
       const definitionFields=["title","acceptance","startDate","dueDate"];
       if(!isPrivileged&&definitionFields.some((key:string)=>body.data?.[key]!==undefined))return Response.json({error:"Only an administrator or reviewer can edit the title, dates, or definition of done."},{status:403});
@@ -65,7 +71,7 @@ export async function POST(request:Request) {
       const tasks=work.map(t=>({...t,...latest.find(e=>e.entityId===t.id)?.payload})) as Task[];
       const userRows=await env.DB!.prepare("SELECT display_name FROM delivery_users WHERE active=1").all<{display_name:string}>();
       const people=[...new Set([...plan.people.map(p=>p.name),...(userRows.results||[]).map(p=>p.display_name),user.displayName])];
-      const result=validateTaskUpdate(base,{...body.data,acceptedBy:body.data?.status==="Accepted"?user.displayName:"",version:body.version},tasks,people);
+      const result=validateTaskUpdate(base,{...body.data,acceptedBy:body.data?.status==="Accepted"?user.displayName:"",version:body.version},tasks,people,{requireDelegation:projectId===LEGACY_PROJECT});
       if(result.error) return Response.json({error:result.error},{status:400});
       value=result.value;
       if(isPrivileged&&body.entityType==="task") {
@@ -76,7 +82,7 @@ export async function POST(request:Request) {
         const validDate=(d:string)=>/^\d{4}-\d{2}-\d{2}$/.test(d)&&Number.isFinite(Date.parse(d))&&new Date(d).toISOString().slice(0,10)===d;
         if(!title||title.length>160||!acceptance||acceptance.length>4000||!validDate(startDate)||!validDate(dueDate)||dueDate<startDate)return Response.json({error:"Enter a title, definition of done, and a valid start-to-due date range."},{status:400});
         value={...value,title,acceptance,deliverable:acceptance,startDate,date:dueDate,originalDueDate:value.status==="Accepted"?(base.originalDueDate||base.date):dueDate};
-        if(base.id.startsWith("custom-"))await env.DB!.prepare("UPDATE delivery_tasks SET title=?,acceptance=?,deliverable=?,start_date=?,due_date=? WHERE id=? AND deleted_at IS NULL").bind(title,acceptance,acceptance,startDate,dueDate,base.id).run();
+
       }
       if(value.status==="Accepted") {
         value.acceptedBy=user.displayName;
@@ -93,8 +99,10 @@ export async function POST(request:Request) {
       value=result.value;
     }
     const at=new Date().toISOString(),version=body.version+1,id=crypto.randomUUID();
+    value={...previous?.payload,...value};
     value.version=version;value.updatedAt=at;
     try {
+      // Definitions travel in the versioned event, so a losing concurrent save cannot change the task.
       await env.DB!.prepare("INSERT INTO delivery_events (id,entity_type,entity_id,version,payload,actor_id,actor_name,at) VALUES (?,?,?,?,?,?,?,?)").bind(id,body.entityType,body.entityId,version,JSON.stringify(value),user.userId,user.displayName,at).run();
       if(body.entityType==="task")await notifyMentions(body.entityId,[value.acceptance,value.evidence,value.notes].filter(Boolean).join("\n"),user.username,user.displayName);
     } catch(error) {

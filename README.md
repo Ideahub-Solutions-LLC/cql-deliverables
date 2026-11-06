@@ -34,6 +34,16 @@ This package gives IdeaHub's technical team the application source and a concret
 
 **This is a source handoff, not a completed self-hosted release or production database backup.** The current `npm start` command runs a local Wrangler preview. It is not a company production server command. Changing DNS alone does not move the application's identity, runtime or data.
 
+## New workspace setup (Stage 4)
+
+Admin and Reviewer accounts can select **Add workspace**, enter a name, then create a project and add its deliverables. Each new project starts empty. The original DSI plan, targets, gates, dates, and activity are not copied.
+
+Each deliverable records an active account owner, workstream, start and due dates, definition of done, and optional target/unit. Projects provide Board, Schedule, Recovery, and History views, plus evidence, comments, and reviewer acceptance. Staff update their assigned work; Admin and Reviewer accounts manage definitions and creation. Acceptance records the signed-in reviewer and requires evidence and any numeric target to be met. The original DSI delegation rule remains specific to its original project.
+
+Project records and activity are scoped to the selected workspace. This uses the existing database tables; no Stage 4 migration or data import is required. Account roles and the user directory remain shared across the application, as in the existing setup.
+
+Validation: `node scripts/test-workspace-setup.mjs` runs the route handlers against an isolated in-memory SQLite database, covering fresh setup, permissions, persistence, acceptance, recovery, stale saves, comments, deletion, and project/workspace isolation. It requires Node.js 22.13+ with `node:sqlite` available and installed development dependencies.
+
 ## Provenance
 
 The source baseline was exported from the published application at commit `acf4a6c9b6af7d262984ba977bbc78f5e2c453d3` (version 1). This working checkout includes subsequent local account, workspace, profile, deliverable, notification, and comment features described in `docs/ACCESS_CONTROL.md` and `docs/DEPLOYMENT_HANDOFF.md`.

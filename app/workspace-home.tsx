@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, ArrowUpRight, Building2, FolderKanban, Plus, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Building2, FolderKanban, Plus } from "lucide-react";
 import type { AuthenticatedUser } from "../lib/auth";
 import DashboardShell from "./dashboard-shell";
 import "./workspace.css";
@@ -44,7 +44,7 @@ export default function WorkspaceHome({
       const project = result.project;
       if (!response.ok || !project) throw new Error(result.error || "Could not add this project.");
       setProjects((current) => [...current, project].sort((a, b) => a.name.localeCompare(b.name)));
-      setActiveProject(project);
+      window.location.assign(`/?projectId=${encodeURIComponent(project.id)}`);
       setName("");
       setAdding(false);
     } catch (cause) {
@@ -64,27 +64,22 @@ export default function WorkspaceHome({
               <div><span className="workspace-kicker">PROJECT</span><h1>{activeProject.name}</h1><p>This project has been added to {workspaceName}.</p></div>
               <span className="workspace-project-symbol"><FolderKanban size={25} /></span>
             </div>
-            {activeProject.id === "dsi-delivery-tracker" ? (
-              <a className="workspace-open-project" href={`/?projectId=${encodeURIComponent(activeProject.id)}`}>
-                Open the delivery tracker <ArrowUpRight size={16} />
-              </a>
-            ) : (
-              <section className="workspace-next-step">
-                <Sparkles size={19} /><div><strong>Project record created</strong><p>Tasks and delivery settings can be added in a later project setup stage.</p></div>
-              </section>
-            )}
+            <a className="workspace-open-project" href={`/?projectId=${encodeURIComponent(activeProject.id)}`}>
+              Open project <ArrowUpRight size={16} />
+            </a>
           </>
         ) : (
           <>
             <div className="workspace-heading">
-              <div><span className="workspace-kicker">YOUR WORKSPACE</span><h1>{workspaceName}</h1><p>Choose a project to continue, or add one if you manage this workspace.</p></div>
+              <div><span className="workspace-kicker">YOUR WORKSPACE</span><h1>{workspaceName}</h1><p>Create a project, then add deliverables with owners, dates, and review criteria.</p></div>
               <span className="workspace-project-symbol"><Building2 size={25} /></span>
             </div>
+            <ol className="setup-progress" aria-label="Workspace setup"><li className="complete">1. Workspace created</li><li className={projects.length ? "complete" : ""}>2. {projects.length ? "Choose a project" : "Add your first project"}</li><li>3. Set up deliverables</li></ol>
             <div className="workspace-section-title"><h2>Projects</h2><span>{projects.length}</span></div>
             {projects.length ? (
               <div className="workspace-projects">
                 {projects.map((project) => (
-                  <button className="workspace-project-card" key={project.id} onClick={() => setActiveProject(project)}>
+                  <button className="workspace-project-card" key={project.id} onClick={() => window.location.assign(`/?projectId=${encodeURIComponent(project.id)}`)}>
                     <span className="project-card-icon"><FolderKanban size={19} /></span>
                     <span className="project-card-copy"><strong>{project.name}</strong><small>Project · {workspaceName}</small></span>
                     <ArrowUpRight size={16} className="project-card-arrow" />
@@ -109,7 +104,7 @@ export default function WorkspaceHome({
           </>
         )}
       </section>
-      <footer className="workspace-footer">Only members of {workspaceName} can see its project list.</footer>
+      <footer className="workspace-footer">Projects and deliverables are organized under {workspaceName}.</footer>
     </DashboardShell>
   );
 }

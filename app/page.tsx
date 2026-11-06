@@ -4,6 +4,7 @@ import { getAuthenticatedUser } from "../lib/auth";
 import source from "./data/plan.json";
 import DeliveryConsole from "./delivery-console";
 import DashboardShell from "./dashboard-shell";
+import ProjectConsole from "./project-console";
 import WorkspaceHome from "./workspace-home";
 import type { Plan } from "../lib/delivery";
 
@@ -38,5 +39,5 @@ export default async function Home({ searchParams }: { searchParams?: Promise<{ 
   if (project.id === "dsi-delivery-tracker" && user.workspaceId === "digital-smile-innovations") {
     return <DeliveryConsole plan={source as unknown as Plan} user={user} projectId={project.id} workspaceName={workspace.name} />;
   }
-  return <WorkspaceHome workspaceName={workspace.name} workspaces={workspaces} projects={projects} user={user} selectedProject={project} />;
+  return <ProjectConsole key={project.id} project={project} workspaceName={workspace.name} workspaces={workspaces} projects={projects} user={user} />;
 }

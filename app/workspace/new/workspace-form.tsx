@@ -34,7 +34,8 @@ export default function AddWorkspaceForm() {
       <section className="workspace-content">
         <div className="workspace-context"><Building2 size={16} /><span>Dashboard</span><b>Add workspace</b></div>
         <button className="workspace-back" onClick={() => window.location.assign("/")}><ArrowLeft size={15} />Back to dashboard</button>
-        <div className="workspace-heading"><div><span className="workspace-kicker">WORKSPACE SETUP</span><h1>Add a workspace</h1><p>Create a workspace for its own project list and team activity.</p></div><span className="workspace-project-symbol"><Building2 size={25} /></span></div>
+        <div className="workspace-heading"><div><span className="workspace-kicker">WORKSPACE SETUP</span><h1>Add a workspace</h1><p>Start an empty workspace, create a project, then add deliverables with owners, dates, and review criteria.</p></div><span className="workspace-project-symbol"><Building2 size={25} /></span></div>
+        <ol className="setup-progress" aria-label="Workspace setup"><li aria-current="step">1. Create workspace</li><li>2. Create project</li><li>3. Add deliverables</li></ol>
         <form className="workspace-add-form" onSubmit={submit}>
           <label htmlFor="workspace-name">Workspace name</label>
           <input id="workspace-name" autoFocus maxLength={100} value={name} onChange={(event) => setName(event.target.value)} placeholder="For example, Client Operations" required />
