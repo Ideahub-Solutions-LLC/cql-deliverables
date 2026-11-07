@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import { ArrowLeft, Eye, EyeOff, WandSparkles } from "lucide-react";
-import "../workspace.css";
 function quality(value:string){if(value.length>=12&&/[a-z]/.test(value)&&/[A-Z]/.test(value)&&/\d/.test(value)&&/[^A-Za-z0-9]/.test(value))return"Strong";if(value.length>=8)return"Medium";return value?"Weak":"";}
 function suggest(){const sets=["abcdefghijkmnopqrstuvwxyz","ABCDEFGHJKLMNPQRSTUVWXYZ","23456789","!@#$%^&*()-_=+"];const all=sets.join("");const random=crypto.getRandomValues(new Uint8Array(24));return [...sets.map((set,i)=>set[random[i]%set.length]),...Array.from(random.slice(4),x=>all[x%all.length])].sort(()=>Math.random()-.5).join("");}
 export default function PasswordForm(){const [current,setCurrent]=useState(""),[next,setNext]=useState(""),[confirm,setConfirm]=useState(""),[show,setShow]=useState(false),[error,setError]=useState(""),[message,setMessage]=useState(""),[busy,setBusy]=useState(false);const rank=quality(next);

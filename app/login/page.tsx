@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { getAuthenticatedUser } from "../../lib/auth";
 import LoginForm from "./login-form";
 import Link from "next/link";
-import "./login.css";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Sign in · DSI Daily Delivery" };

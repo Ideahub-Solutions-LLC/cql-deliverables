@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { ArrowLeft, Camera, Save } from "lucide-react";
 import type { AuthenticatedUser } from "../../lib/auth";
-import "../workspace.css";
 
 export default function ProfileForm({user}:{user:AuthenticatedUser}){
 const [firstName,setFirst]=useState(user.firstName||user.displayName.split(" ")[0]),[lastName,setLast]=useState(user.lastName||user.displayName.split(" ").slice(1).join(" ")),[email,setEmail]=useState(user.email||""),[avatar,setAvatar]=useState(user.avatarData||""),[saving,setSaving]=useState(false),[message,setMessage]=useState(""),[error,setError]=useState("");

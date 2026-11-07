@@ -1,0 +1,280 @@
+/* Shared mobile-first layout rules. Keep wide data inside its own scroll region. */
+:root {
+  --page-gutter: clamp(16px, 2.5vw, 48px);
+}
+
+html { -webkit-text-size-adjust: 100%; }
+body { min-width: 0; }
+img, video, canvas { max-width: 100%; }
+input, select, textarea { min-width: 0; max-width: 100%; }
+
+.console-shell { min-height: 100svh; }
+.console-shell .main { width: 100%; min-width: 0; }
+.console-shell .content {
+  width: 100%;
+  max-width: none;
+  padding-inline: var(--page-gutter);
+}
+.workspace-page .workspace-content,
+.dashboard-shell .workspace-content,
+.workspace-page .project-content {
+  width: 100%;
+  max-width: none;
+  padding-inline: var(--page-gutter);
+}
+.console-shell .sidebar { overflow-y: auto; overscroll-behavior: contain; }
+.console-shell .topbar {
+  height: auto;
+  min-height: 74px;
+  padding: 12px var(--page-gutter);
+  flex-wrap: wrap;
+}
+.breadcrumb, .top-actions, .dashboard-tools { min-width: 0; }
+.breadcrumb { flex-wrap: wrap; overflow-wrap: anywhere; }
+.top-actions { flex-wrap: wrap; justify-content: flex-end; }
+.dashboard-tools { flex-wrap: wrap; }
+.console-shell .dashboard-clock { flex-wrap: wrap; }
+.page-heading > div, .workspace-heading > div,
+.panel-heading > div, .task-identity, .managed-user > header > div,
+.project-card-copy, .deliverable-manager, .deliverable-manager > span,
+.activity-list > article > div { min-width: 0; }
+.page-heading, .workspace-heading, .panel-heading,
+.project-toolbar, .deliverable-actions, .managed-user > header,
+.managed-user footer, .drawer-footer > div, .panel-footer {
+  flex-wrap: wrap;
+}
+.workspace-heading h1, .page-heading h1, .drawer-task-title,
+.task-main, .kanban-card, .role-card, .workspace-empty,
+.managed-user, .activity-list, .definition, .small-note,
+.notification-popover, .alert, .workspace-context {
+  overflow-wrap: anywhere;
+}
+.workspace-context { flex-wrap: wrap; }
+.workspace-section-title { flex-wrap: wrap; }
+.workspace-projects { grid-template-columns: minmax(0, 1fr); }
+.workspace-project-card .project-card-copy strong { white-space: normal; }
+.workspace-empty { padding: 24px 16px; text-align: center; }
+.project-filters label { flex: 1 1 180px; min-width: 0; }
+.project-filters input, .project-filters select { width: 100%; }
+.project-toolbar { align-items: flex-start; }
+.search { min-width: 0; }
+.filterbar .search { flex-basis: 100%; }
+.filterbar > select { min-width: 0; }
+
+/* Explicit zero minimums let long titles and evidence shrink within grid cells. */
+.stat-grid { grid-template-columns: minmax(0, 1fr); }
+.daily-layout, .score-layout, .handoff-grid,
+.daily-right, .month-grid, .role-grid, .milestones,
+.risk-grid, .promise-grid, .setter-cards {
+  grid-template-columns: minmax(0, 1fr);
+}
+.daily-layout > *, .score-layout > *, .handoff-grid > *,
+.stat-grid > *, .month-grid > *, .role-grid > * { min-width: 0; }
+.form-row, .metrics-fields, .managed-user-fields,
+.signup-form .form-row { grid-template-columns: minmax(0, 1fr); }
+.managed-password { grid-template-columns: minmax(0, 1fr); }
+.managed-password label { grid-column: 1 / -1; }
+.profile-form { width: 100%; }
+.profile-form label, .form-row > *, .metrics-fields > * { min-width: 0; }
+.password-input-line input { min-width: 0; }
+.signup-form { max-height: none; overflow: visible; padding-right: 0; }
+.login-page .login-input-wrap input { min-width: 0; }
+.login-page .login-panel { padding-inline: clamp(20px, 5vw, 80px); }
+.comment-form { grid-template-columns: minmax(0, 1fr); }
+.comment-form .button { justify-self: end; }
+
+.table-scroll, .gantt-scroll, .kanban {
+  max-width: 100%;
+  min-width: 0;
+  overscroll-behavior-x: contain;
+}
+.table-scroll table { min-width: 640px; }
+.table-scroll .text-button { white-space: normal; text-align: left; }
+.table-scroll:focus-visible, .gantt-scroll:focus-visible, .kanban:focus-visible {
+  outline: 3px solid #7ea6d4; outline-offset: -3px;
+}
+.kanban { scroll-snap-type: x proximity; }
+.kanban-column { min-width: 0; scroll-snap-align: start; }
+.console-shell .kanban { grid-template-columns: repeat(6, minmax(min(260px, 85vw), 1fr)); }
+.gantt-scroll .gantt-label, .gantt-scroll .gantt-dates > div:first-child {
+  width: 150px;
+  padding-inline: 12px;
+}
+.gantt-label strong { flex-wrap: wrap; }
+.month-days, .week-labels { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.month { min-width: 0; padding-inline: 12px; }
+.gantt-key, .chart-legend { flex-wrap: wrap; }
+.timeline-summary > div:last-child:not(:first-child) { flex-wrap: wrap; }
+.org-director { flex-wrap: wrap; }
+.org-director > div { min-width: 0; }
+.recovery-banner { flex-wrap: wrap; }
+.recovery-banner > div { min-width: min(100%, 180px); }
+.task-row { display: grid; grid-template-columns: auto minmax(0, 1fr); }
+.task-row .task-stage { grid-column: 2; padding-top: 0; align-items: flex-start; }
+.hero-copy { min-width: 0; }
+.hero-meta > span { min-width: 0; }
+.hero .hero-goal { min-width: 0; max-width: 100%; }
+.hero .goal-big, .hero .goal-bottom { flex-wrap: wrap; }
+.drawer { height: 100dvh; max-height: 100%; }
+.drawer-header, .drawer-body, .drawer-footer { padding-inline: 16px; }
+.drawer-header > div { min-width: 0; }
+.drawer-body { min-height: 0; overscroll-behavior: contain; }
+.drawer-footer { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+.console-shell .toast {
+  left: 50%;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+@media (min-width: 400px) {
+  .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 640px) {
+  .workspace-projects { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .form-row, .metrics-fields, .managed-user-fields,
+  .signup-form .form-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .comment-form { grid-template-columns: minmax(0, 1fr) auto; }
+  .managed-password { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .role-grid, .milestones, .risk-grid, .promise-grid, .setter-cards,
+  .daily-right { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .daily-right .note-card { grid-column: 1 / -1; }
+  .drawer-header, .drawer-body, .drawer-footer { padding-inline: 28px; }
+  .gantt-scroll .gantt-label, .gantt-scroll .gantt-dates > div:first-child { width: 254px; padding-inline: 20px; }
+  .task-row { display: flex; }
+  .task-row .task-stage { padding-top: 18px; }
+}
+
+/* Switch both application shells together, before tablet toolbars become cramped. */
+@media (max-width: 1023px) {
+  .console-shell .sidebar {
+    width: min(280px, calc(100vw - 48px));
+    transform: translateX(-100%);
+    visibility: hidden;
+    padding-top: max(28px, env(safe-area-inset-top));
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+  }
+  .console-shell .sidebar.open { transform: none; visibility: visible; }
+  .console-shell .main { margin-left: 0; }
+  .console-shell .mobile-toggle { display: grid; }
+  .console-shell .nav-scrim, .console-shell .dashboard-sidebar-backdrop {
+    display: block; position: fixed; inset: 0; background: #00193680; z-index: 29;
+  }
+  .console-shell .dashboard-nav-close {
+    display: grid; position: absolute; top: 12px; right: 12px; background: transparent; color: white;
+  }
+  .console-shell .topbar { gap: 12px; }
+  .console-shell .dashboard-clock time { display: none; }
+  .console-shell .dashboard-account > span:not(.avatar) { display: none; }
+  .hero { flex-direction: column; }
+  .hero .hero-copy { max-width: 100%; }
+  .hero .hero-goal { width: 100%; border-left: 0; border-top: 1px solid #ffffff20; padding-left: 0; padding-top: 20px; }
+  .hero .hero-goal { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; }
+  .hero .hero-goal > span, .hero .hero-goal > p { width: 100%; }
+  .hero .goal-bottom { border-top: 0; }
+}
+
+@media (max-width: 639px) {
+  .console-shell .topbar > .breadcrumb { flex: 1 1 100%; }
+  .console-shell .top-actions, .console-shell .topbar > .dashboard-tools { width: 100%; justify-content: flex-end; }
+  .console-shell .topbar .dashboard-tools { position: static; }
+  .console-shell .topbar { position: relative; }
+  .console-shell .topbar .notice-wrap { position: static; }
+  .console-shell .notification-popover { right: 16px; width: calc(100% - 32px); max-height: 60dvh; overflow-y: auto; }
+  .console-shell .dashboard-clock { font-size: 11px; }
+  .console-shell .dashboard-clock > svg { display: none; }
+  .console-shell .dashboard-clock select { min-height: 44px; font-size: 14px; }
+  .date-control { margin-left: 0; max-width: 100%; }
+  .console-shell .date-control button { width: 44px; height: 44px; }
+  .console-shell .date-control input { width: 145px; font-size: 16px; }
+  .console-shell .filterbar > select { flex: 1 1 120px; max-width: 100%; }
+  .console-shell .search { height: 44px; }
+  .console-shell .search input { min-width: 0; }
+  .console-shell .button, .workspace-add-button, .workspace-cancel,
+  .project-toolbar nav button, .workspace-open-project { white-space: normal; min-height: 44px; }
+  .console-shell .icon-btn, .dashboard-icon-button, .signout-button,
+  .password-toggle, .dashboard-account { min-width: 44px; min-height: 44px; }
+  .console-shell .text-button, .comment-actions button, .workspace-back { min-height: 44px; }
+  .managed-user footer > .button { flex: 1 1 130px; }
+  .console-shell .managed-password .button { min-height: 44px; }
+  .console-shell .panel-heading h2 { flex-wrap: wrap; }
+  .user-directory-summary { width: 100%; margin-left: 0; }
+  .profile-form { padding: 16px; }
+  .console-shell .alert { align-items: flex-start; flex-wrap: wrap; font-size: 12px; }
+  .console-shell .task-main > p, .console-shell .panel-heading p,
+  .console-shell .stat p, .console-shell .small-note { font-size: 12px; }
+  .console-shell .task-main h3 { font-size: 14px; }
+  .console-shell .task-sub, .console-shell .badge { font-size: 11px; }
+  .console-shell .stat-top { font-size: 12px; }
+  .console-shell .managed-user-fields label, .console-shell .managed-password label,
+  .console-shell .profile-form label, .console-shell .drawer label { font-size: 13px; }
+  .console-shell .managed-user .button, .console-shell .project-toolbar button,
+  .console-shell .kanban-card p, .console-shell .role-card > p,
+  .console-shell .milestones p, .console-shell .promise-grid p { font-size: 12px; }
+  .console-shell .kanban-card h3 { font-size: 14px; }
+  .console-shell .notice-item > small { font-size: 12px; }
+  .console-shell .notice-item > span { font-size: 13px; }
+  .console-shell .notice-item > time, .console-shell .notification-popover > header button,
+  .console-shell .managed-user > header small, .console-shell .account-status { font-size: 11px; }
+  .console-shell .month .calendar-day { min-width: 0; }
+  .console-shell .month .calendar-day > span { font-size: 8px; }
+  /* Readable fields also avoid automatic focus zoom in mobile Safari. */
+  .console-shell input:not([type="checkbox"]):not([type="radio"]),
+  .console-shell select, .console-shell textarea,
+  .workspace-page input, .workspace-page select,
+  .login-page input, .login-page select,
+  .login-page .login-input-wrap input, .login-page .login-select-wrap select { font-size: 16px; }
+  .console-shell .drawer input, .console-shell .drawer select,
+  .profile-form input, .profile-form select, .managed-user-fields input,
+  .managed-user-fields select, .managed-password input { min-height: 44px; }
+  .workspace-switcher, .workspace-switcher-select-wrap { min-width: 0; max-width: 100%; }
+  .console-shell .sidebar .workspace-switcher select { font-size: 14px; min-height: 44px; }
+  .workspace-topbar { flex-wrap: wrap; height: auto; min-height: 70px; gap: 12px; padding-block: 12px; }
+}
+
+@media (min-width: 1024px) {
+  .console-shell .main { width: calc(100% - 238px); margin-left: 238px; }
+  .console-shell .sidebar { width: 238px; transform: none; visibility: visible; }
+  .stat-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .month-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .role-grid, .milestones, .risk-grid, .promise-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .filterbar .search { flex-basis: 220px; }
+  .managed-user-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1280px) {
+  .daily-layout { grid-template-columns: minmax(0, 1fr) 300px; }
+  .daily-right { display: block; }
+  .daily-right .panel { margin-bottom: 18px; }
+  .score-layout { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+  .handoff-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .month-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .role-grid, .managed-user-fields { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .managed-password { grid-template-columns: minmax(180px, 1fr) auto auto; }
+  .managed-password label { grid-column: auto; }
+}
+
+@media (pointer: coarse) {
+  .sidebar nav button, .nav-admin-link, .workspace-tree-label,
+  .workspace-tree-project, .workspace-tree-toggle,
+  .dashboard-popover button, .dashboard-popover a { min-height: 44px; }
+  .workspace-tree-toggle { min-width: 32px; }
+  .checkbox-label { min-height: 44px; }
+  .checkbox-label input { width: 20px; height: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar, .drawer, .workspace-project-card { animation: none; transition: none; }
+  .sync-state.busy svg, .workspace-tree-spinner { animation: none; }
+}
+
+@media print {
+  .console-shell .nav-scrim, .console-shell .dashboard-sidebar-backdrop { display: none; }
+  .console-shell .main { width: 100%; margin-left: 0; }
+  .console-shell .content, .dashboard-shell .workspace-content { padding-inline: 0; }
+  .console-shell .kanban { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .table-scroll table { min-width: 0; }
+}

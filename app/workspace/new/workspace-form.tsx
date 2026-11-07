@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { ArrowLeft, Building2, Plus } from "lucide-react";
-import "../../workspace.css";
 
 export default function AddWorkspaceForm() {
   const [name, setName] = useState("");

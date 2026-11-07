@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Check, KeyRound, RefreshCw, Save, UserRound, UserX } from "lucide-react";
-import "./workspace.css";
 
 export type Member={username:string;displayName:string;role:string;active:number;email:string|null;firstName:string;lastName:string;timezone:string;themeMode:string;avatarData:string|null};
 

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { ArrowLeft, ArrowUpRight, Building2, FolderKanban, Plus } from "lucide-react";
 import type { AuthenticatedUser } from "../lib/auth";
 import DashboardShell from "./dashboard-shell";
-import "./workspace.css";
 
 type WorkspaceProject = { id: string; name: string; createdAt: string };
 type WorkspaceOption = { id: string; name: string };
