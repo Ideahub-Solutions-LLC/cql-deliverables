@@ -39,7 +39,7 @@ const DB = {
 };
 globalThis.__workspaceTest = { env: { DB }, user: null };
 const routes = {};
-for (const name of ["workspaces", "projects", "deliverables", "deliverables/[id]", "state", "comments", "comments/[id]"]) {
+for (const name of ["notifications", "workspaces", "projects", "deliverables", "deliverables/[id]", "state", "comments", "comments/[id]"]) {
   const bundled = await build({
     entryPoints: [`app/api/${name}/route.ts`], bundle: true, write: false, format: "esm", platform: "node", logLevel: "silent", tsconfigRaw: {},
     plugins: [{ name: "isolated-test-environment", setup(builder) {
@@ -122,6 +122,16 @@ try {
   assert.deepEqual(otherProject.audit, []);
   await call("state", "POST", { ...progress, projectId: second.id }, 404);
   await call("state", "POST", { ...progress, entityType: "metrics", entityId: "2026-11-06" }, 400);
+  login("staff", "ideahub");
+  const notices = await call("notifications", "GET");
+  const assignment = notices.notifications.find(notice => notice.taskId === task.id);
+  assert.ok(assignment, "Assigned staff receives a notification even from another workspace");
+  assert.equal(assignment.projectId, project.id);
+  assert.equal(assignment.workspaceId, workspace.id);
+  await call("notifications", "PATCH", { id: assignment.id });
+  assert.ok((await call("notifications", "GET")).notifications.find(notice => notice.id === assignment.id).readAt);
+  login("viewer", "ideahub");
+  assert.ok(!(await call("notifications", "GET")).notifications.some(notice => notice.id === assignment.id));
   login("reviewer", "ideahub");
   await call("state", "GET", null, 403, {}, `?projectId=${project.id}`);
   await call("state", "POST", { ...progress, version: 2 }, 403);
@@ -137,6 +147,11 @@ try {
   assert.deepEqual(legacy.audit, []);
   const source = JSON.parse(readFileSync("app/data/plan.json", "utf8"));
   const legacyTask = source.tasks.find(task => !task.dependencies?.length);
+  sqlite.prepare("INSERT INTO delivery_notifications (id,recipient_username,actor_username,task_id,kind,message,created_at) VALUES (?,?,?,?,?,?,?)")
+    .run("legacy-notice", "marco", "reviewer", legacyTask.id, "mention", "Legacy mention", new Date().toISOString());
+  const legacyNotice = (await call("notifications", "GET")).notifications.find(notice => notice.id === "legacy-notice");
+  assert.equal(legacyNotice.projectId, "dsi-delivery-tracker");
+  assert.equal(legacyNotice.workspaceId, "digital-smile-innovations");
   const legacyReview = { projectId: "dsi-delivery-tracker", entityType: "task", entityId: legacyTask.id, version: 0, data: { status: "Accepted", evidence: "Legacy test proof", actual: Number(legacyTask.target) || 1 } };
   const delegation = await call("state", "POST", legacyReview, 400);
   assert.match(delegation.error, /delegat|Wyline/);

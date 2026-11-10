@@ -183,7 +183,7 @@ input, select, textarea { min-width: 0; max-width: 100%; }
   .console-shell .topbar .dashboard-tools { position: static; }
   .console-shell .topbar { position: relative; }
   .console-shell .topbar .notice-wrap { position: static; }
-  .console-shell .notification-popover { right: 16px; width: calc(100% - 32px); max-height: 60dvh; overflow-y: auto; }
+  .console-shell .notification-popover { right: 16px; width: calc(100% - 32px); max-height: 60dvh; overflow: hidden; }
   .console-shell .dashboard-clock { font-size: 11px; }
   .console-shell .dashboard-clock > svg { display: none; }
   .console-shell .dashboard-clock select { min-height: 44px; font-size: 14px; }

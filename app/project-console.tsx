@@ -13,14 +13,14 @@ type Project = { id: string; name: string };
 type Person = { username: string; displayName: string };
 type View = "Board" | "Schedule" | "Recovery" | "History";
 
-export default function ProjectConsole({ project, projects, workspaces, workspaceName, user }: {
-  project: Project; projects: Project[]; workspaces: Project[]; workspaceName: string; user: AuthenticatedUser;
+export default function ProjectConsole({ project, projects, workspaces, workspaceName, user, initialTaskId }: {
+  initialTaskId?: string; project: Project; projects: Project[]; workspaces: Project[]; workspaceName: string; user: AuthenticatedUser;
 }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [audit, setAudit] = useState<Audit[]>([]);
   const [people, setPeople] = useState<Person[]>([]);
   const [view, setView] = useState<View>("Board");
-  const [selectedId, setSelectedId] = useState("");
+  const [selectedId, setSelectedId] = useState(initialTaskId || "");
   const [adding, setAdding] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

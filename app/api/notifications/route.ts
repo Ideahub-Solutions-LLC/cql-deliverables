@@ -1,15 +1,28 @@
 import { env } from "cloudflare:workers";
 import { getAuthenticatedUser } from "../../../lib/auth";
 
+import source from "../../data/plan.json";
+
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   const user = await getAuthenticatedUser(request);
   if (!user) return Response.json({ error: "Sign in to view notifications." }, { status: 401 });
-  const result = await env.DB!.prepare(`SELECT n.id,n.task_id AS taskId,n.kind,n.message,n.read_at AS readAt,n.created_at AS createdAt,u.display_name AS actorName
+  const result = await env.DB!.prepare(`SELECT n.id,n.task_id AS taskId,n.kind,n.message,n.read_at AS readAt,n.created_at AS createdAt,u.display_name AS actorName, p.id AS projectId, w.id AS workspaceId
     FROM delivery_notifications n JOIN delivery_users u ON u.username=n.actor_username
-    WHERE n.recipient_username=? ORDER BY n.created_at DESC LIMIT 50`).bind(user.username).all();
-  return Response.json({ notifications: result.results ?? [] }, { headers: { "Cache-Control": "no-store" } });
+    LEFT JOIN delivery_tasks d ON d.id=n.task_id AND d.deleted_at IS NULL
+    LEFT JOIN workspace_projects p ON p.id=d.project_id
+    LEFT JOIN workspaces w ON w.id=p.workspace_id AND w.active=1
+    WHERE n.recipient_username=? ORDER BY n.created_at DESC LIMIT 50`).bind(user.username).all<{id:string;taskId:string|null;projectId:string|null;workspaceId:string|null}>();
+  const legacyIds = new Set([...source.tasks, ...source.milestones].map(task => task.id));
+  const legacy = await env.DB!.prepare(`SELECT p.id AS projectId, w.id AS workspaceId FROM workspace_projects p
+    JOIN workspaces w ON w.id=p.workspace_id AND w.active=1
+    WHERE p.id='dsi-delivery-tracker' AND w.id='digital-smile-innovations'`).first<{projectId:string;workspaceId:string}>();
+  const notifications = (result.results ?? []).map(notice => ({
+    ...notice,
+    ...(!notice.projectId && notice.taskId && legacyIds.has(notice.taskId) && legacy ? legacy : {}),
+  }));
+  return Response.json({ notifications }, { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function PATCH(request: Request) {
