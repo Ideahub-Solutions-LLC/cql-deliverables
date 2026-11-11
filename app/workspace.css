@@ -48,3 +48,15 @@
 
 .setup-progress{display:flex;flex-wrap:wrap;gap:12px 24px;list-style:none;padding:15px 0;margin:0 0 24px;border-block:1px solid #dfe5eb;color:#6581a1;font-size:12px}.setup-progress .complete{color:#245c45}.setup-progress [aria-current="step"]{color:#001936;font-weight:650}
 .project-content{width:calc(100% - 48px);max-width:1500px}.project-content .workspace-heading{align-items:flex-start}.project-summary{display:flex;flex-wrap:wrap;gap:24px;margin-bottom:24px;font-size:13px;color:#506883}.project-toolbar{display:flex;justify-content:space-between;gap:14px;margin:22px 0}.project-toolbar nav{display:flex;flex-wrap:wrap;gap:5px}.project-toolbar nav button{padding:9px 14px;background:transparent;border-radius:6px;color:#506883}.project-toolbar nav button[aria-current]{background:#001936;color:white}.project-filters{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:22px}.project-filters label{display:grid;gap:6px;min-width:180px;color:#506883;font-size:11px}.project-filters input,.project-filters select{padding:10px;border:1px solid #dce2e9;border-radius:6px;background:white;color:#26323f}.project-board{overflow:auto;grid-template-columns:repeat(6,minmax(220px,1fr));padding-bottom:16px}.project-content .workspace-empty{padding:24px;gap:14px;text-align:center}.project-content button:focus-visible,.project-content a:focus-visible{outline:3px solid #7597bd;outline-offset:3px}@media(max-width:640px){.project-content{width:calc(100% - 28px)}.project-content .workspace-heading{flex-direction:column}.project-toolbar{align-items:flex-start}.project-toolbar nav button{padding:8px}.setup-progress{gap:10px;font-size:11px}}
+
+/* Workstream combobox (Add / Update deliverable) */
+.workstream-field .combo{position:relative}
+.workstream-field .combo input{padding-right:34px}
+.workstream-field .combo-caret{position:absolute;right:11px;top:50%;transform:translateY(-50%);color:#8ea5bf;pointer-events:none}
+.workstream-field .combo-list{position:absolute;z-index:20;left:0;right:0;top:calc(100% + 4px);margin:0;padding:4px;list-style:none;background:#fff;border:1px solid #d9e4f0;border-radius:6px;box-shadow:0 10px 24px #18222d1f;max-height:240px;overflow:auto}
+.workstream-field .combo-list li{display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:4px;font-size:12px;font-weight:400;color:#3d4f64;cursor:pointer}
+.workstream-field .combo-list li.active{background:#eef3f8}
+.workstream-field .combo-list li.selected{font-weight:600;color:#001936}
+.workstream-field .combo-list li.add{color:#001936;font-weight:600;border-top:1px solid #e6eaef;margin-top:2px}
+.workstream-field .combo-list li.add:first-child{border-top:0;margin-top:0}
+.workstream-field .combo-error{color:#c24135}

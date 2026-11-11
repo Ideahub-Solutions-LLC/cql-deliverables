@@ -2,6 +2,7 @@ import { env } from "cloudflare:workers";
 import { getAuthenticatedUser } from "../../../lib/auth";
 
 import { LEGACY_PROJECT, projectInWorkspace } from "../../../lib/project-access";
+import { cleanWorkstream, rememberWorkstream } from "../../../lib/workstreams";
 
 export const dynamic = "force-dynamic";
 
@@ -29,17 +30,19 @@ export async function POST(request: Request) {
   if (!await projectInWorkspace(projectId, user.workspaceId)) return Response.json({ error: "This project is not available in the selected workspace." }, { status: 403 });
   const title = typeof body.title === "string" ? body.title.trim().slice(0,160) : "";
   const ownerUsername = typeof body.ownerUsername === "string" ? body.ownerUsername : "";
-  const workstream = typeof body.workstream === "string" ? body.workstream.trim().slice(0,100) : "Additional deliverables";
+  let workstream = cleanWorkstream(body.workstream);
   const startDate = typeof body.startDate === "string" ? body.startDate : "";
   const dueDate = typeof body.dueDate === "string" ? body.dueDate : "";
   const acceptance = typeof body.acceptance === "string" ? body.acceptance.trim().slice(0,4000) : "";
   const target = body.target==null||body.target===""?null:Number(body.target);
   const owner = await env.DB!.prepare("SELECT username,display_name FROM delivery_users WHERE username=? AND active=1").bind(ownerUsername).first<{username:string;display_name:string}>();
+  if (!workstream) return Response.json({ error: "Choose or type a workstream." }, { status: 400 });
   if (!title || !owner || !acceptance || !validDate(startDate) || !validDate(dueDate) || dueDate < startDate || (target!==null&&(!Number.isFinite(target)||target<0))) return Response.json({ error: "Enter a title, active owner, definition of done, a valid date range, and a nonnegative target." }, { status: 400 });
+  workstream = await rememberWorkstream(env.DB!, user.workspaceId, workstream, user.username);
   const id = `custom-${crypto.randomUUID()}`;
   const now = new Date().toISOString();
   await env.DB!.prepare(`INSERT INTO delivery_tasks (id,project_id,title,owner,owner_username,workstream,start_date,due_date,deliverable,acceptance,target,unit,created_by,created_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(id,projectId,title,owner.display_name,owner.username,workstream||"Additional deliverables",startDate,dueDate,acceptance,acceptance,target===null?null:String(target),typeof body.unit==="string"?body.unit.trim().slice(0,40):null,user.username,now).run();
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(id,projectId,title,owner.display_name,owner.username,workstream,startDate,dueDate,acceptance,acceptance,target===null?null:String(target),typeof body.unit==="string"?body.unit.trim().slice(0,40):null,user.username,now).run();
   await env.DB!.prepare(`INSERT INTO delivery_notifications (id,recipient_username,actor_username,task_id,kind,message,created_at) VALUES (?,?,?,?,?,?,?)`)
     .bind(crypto.randomUUID(),owner.username,user.username,id,"assignment",`${user.displayName} assigned you a deliverable: ${title}`,now).run();
   return Response.json({ task: { id,title,owner:owner.display_name,ownerUsername:owner.username,workstream,startDate,dueDate,date:dueDate,originalDueDate:dueDate,dueTime:"17:00",deliverable:acceptance,acceptance,target,unit:body.unit??"",status:"Ready",actual:null,evidence:"",blocker:"",rescueOwner:"",recoveryDate:"",acceptedBy:"",closedAt:null } }, { status: 201 });

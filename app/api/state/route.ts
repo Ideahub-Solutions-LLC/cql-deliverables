@@ -4,6 +4,7 @@ import source from "../../data/plan.json";
 import { type Plan, type Task, gateTasks, validateTaskUpdate, validateMetrics } from "../../../lib/delivery";
 import { notifyMentions } from "../../../lib/mentions";
 import { eventScopeSql, LEGACY_PROJECT, projectInWorkspace } from "../../../lib/project-access";
+import { cleanWorkstream, rememberWorkstream } from "../../../lib/workstreams";
 const legacyPlan=source as unknown as Plan;
 const emptyPlan: Plan={meta:{},people:[],phases:[],milestones:[],targets:[],calendar:[],tasks:[]};
 export const dynamic="force-dynamic";
@@ -63,8 +64,8 @@ export async function POST(request:Request) {
       const ownerId=base.ownerPersonId||plan.people.find(person=>person.name===base.owner)?.id;
       if(!((user.role==="staff"&&base.ownerUsername===user.username)||(projectId===LEGACY_PROJECT?canEditTask(user,ownerId||""):canReview(user.role)))) return Response.json({error:"Your role can update only work assigned to you."},{status:403});
       const isPrivileged=user.role==="admin"||user.role==="reviewer";
-      const definitionFields=["title","acceptance","startDate","dueDate"];
-      if(!isPrivileged&&definitionFields.some((key:string)=>body.data?.[key]!==undefined))return Response.json({error:"Only an administrator or reviewer can edit the title, dates, or definition of done."},{status:403});
+      const definitionFields=["title","acceptance","startDate","dueDate","workstream"];
+      if(!isPrivileged&&definitionFields.some((key:string)=>body.data?.[key]!==undefined))return Response.json({error:"Only an administrator or reviewer can edit the title, workstream, dates, or definition of done."},{status:403});
       const isApproval=body.data?.status==="Accepted";
       const isReopening=previous?.payload.status==="Accepted" && body.data?.status!=="Accepted";
       if((isApproval||isReopening)&&!canReview(user.role)) return Response.json({error:"Only an authorized reviewer can accept or reopen work."},{status:403});
@@ -82,6 +83,13 @@ export async function POST(request:Request) {
         const validDate=(d:string)=>/^\d{4}-\d{2}-\d{2}$/.test(d)&&Number.isFinite(Date.parse(d))&&new Date(d).toISOString().slice(0,10)===d;
         if(!title||title.length>160||!acceptance||acceptance.length>4000||!validDate(startDate)||!validDate(dueDate)||dueDate<startDate)return Response.json({error:"Enter a title, definition of done, and a valid start-to-due date range."},{status:400});
         value={...value,title,acceptance,deliverable:acceptance,startDate,date:dueDate,originalDueDate:value.status==="Accepted"?(base.originalDueDate||base.date):dueDate};
+        if(body.data?.workstream!==undefined){
+          let workstream=cleanWorkstream(body.data.workstream);
+          if(!workstream)return Response.json({error:"Choose or type a workstream."},{status:400});
+          // Only a changed workstream joins the list, so older plan workstreams are not added by an unrelated save.
+          if(workstream!==base.workstream)workstream=await rememberWorkstream(env.DB!,user.workspaceId,workstream,user.username);
+          value.workstream=workstream;
+        }
 
       }
       if(value.status==="Accepted") {

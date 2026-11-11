@@ -44,6 +44,10 @@ Project records and activity are scoped to the selected workspace. This uses the
 
 Validation: `node scripts/test-workspace-setup.mjs` runs the route handlers against an isolated in-memory SQLite database, covering fresh setup, permissions, persistence, acceptance, recovery, stale saves, comments, deletion, and project/workspace isolation. It requires Node.js 22.13+ with `node:sqlite` available and installed development dependencies.
 
+## Workstreams
+
+Every deliverable has a **Workstream**. On **Add a deliverable** and **Update deliverable**, Admin and Reviewer accounts pick from a dropdown or type a name. The default list is Paid Ads, LP Conversion, Socials, SEO, Marketplaces, Partnerships, Webinars and Reporting. Typing a new name shows **Add “name” as a workstream**; it is also added automatically when a deliverable is saved with it. Custom workstreams are shared within the workspace, matched without regard to case (typing `seo` saves `SEO`), and stored in `delivery_workstreams` (migration `0005_workstreams.sql`). Until that migration is applied, the eight defaults still work but custom names are not kept on the list. Staff can see a deliverable's workstream but cannot change it.
+
 ## Provenance
 
 The source baseline was exported from the published application at commit `acf4a6c9b6af7d262984ba977bbc78f5e2c453d3` (version 1). This working checkout includes subsequent local account, workspace, profile, deliverable, notification, and comment features described in `docs/ACCESS_CONTROL.md` and `docs/DEPLOYMENT_HANDOFF.md`.
@@ -71,6 +75,7 @@ node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0002_workspaces_and_projects.sql
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0003_profiles_tasks_comments_notifications.sql
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0004_task_owner_account.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0005_workstreams.sql
 ```
 
 To create local sign-in accounts, place the private credential document at the ignored path `notes/credential.docx`, then run `npm run accounts:seed -- notes/credential.docx`. This step is optional for building the app, but needed to sign in with seeded accounts. Keep the credential document out of Git. See `docs/ACCESS_CONTROL.md` for account details.

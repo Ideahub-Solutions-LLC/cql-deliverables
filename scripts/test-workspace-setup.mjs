@@ -39,7 +39,7 @@ const DB = {
 };
 globalThis.__workspaceTest = { env: { DB }, user: null };
 const routes = {};
-for (const name of ["notifications", "workspaces", "projects", "deliverables", "deliverables/[id]", "state", "comments", "comments/[id]"]) {
+for (const name of ["notifications", "workspaces", "projects", "deliverables", "deliverables/[id]", "state", "comments", "comments/[id]", "workstreams"]) {
   const bundled = await build({
     entryPoints: [`app/api/${name}/route.ts`], bundle: true, write: false, format: "esm", platform: "node", logLevel: "silent", tsconfigRaw: {},
     plugins: [{ name: "isolated-test-environment", setup(builder) {
@@ -115,6 +115,29 @@ try {
   const listed = await call("deliverables", "GET", null, 200, {}, `?projectId=${project.id}`);
   assert.equal(listed.tasks[0].title, "Reviewed title");
   assert.equal(listed.tasks[0].status, "Accepted");
+  // Workstreams: eight defaults, custom names added explicitly or on save, scoped to the workspace.
+  const defaults = ["Paid Ads", "LP Conversion", "Socials", "SEO", "Marketplaces", "Partnerships", "Webinars", "Reporting"];
+  assert.deepEqual((await call("workstreams", "GET")).workstreams, [...defaults, "Operations"], "A custom workstream saved on a new deliverable joins the list");
+  await call("deliverables", "POST", { ...definition, workstream: "  " }, 400);
+  const { task: seoTask } = await call("deliverables", "POST", { ...definition, title: "SEO audit", workstream: "seo" }, 201);
+  assert.equal(seoTask.workstream, "SEO", "A typed default uses the list spelling");
+  await call("workstreams", "POST", { name: "" }, 400);
+  const added = await call("workstreams", "POST", { name: "  Email   Nurture " }, 201);
+  assert.equal(added.workstream, "Email Nurture");
+  assert.equal((await call("workstreams", "POST", { name: "email nurture" }, 201)).workstreams.filter(name => name === "Email Nurture").length, 1, "No case-insensitive duplicates");
+  const moved = await call("state", "POST", { projectId: project.id, entityType: "task", entityId: seoTask.id, version: 0, data: { status: "Ready", workstream: "Affiliates" } });
+  assert.equal(moved.value.workstream, "Affiliates");
+  assert.ok((await call("workstreams", "GET")).workstreams.includes("Affiliates"), "A custom workstream set on update joins the list");
+  assert.equal((await call("deliverables", "GET", null, 200, {}, `?projectId=${project.id}`)).tasks.find(item => item.id === seoTask.id).workstream, "Affiliates");
+  await call("state", "POST", { projectId: project.id, entityType: "task", entityId: seoTask.id, version: 1, data: { status: "Ready", workstream: "" } }, 400);
+  login("staff", workspace.id);
+  await call("workstreams", "POST", { name: "Staff stream" }, 403);
+  await call("state", "POST", { projectId: project.id, entityType: "task", entityId: seoTask.id, version: 1, data: { status: "In progress", workstream: "Paid Ads" } }, 403);
+  assert.deepEqual((await call("workstreams", "GET")).workstreams.slice(0, 8), defaults);
+  login("reviewer", "ideahub");
+  assert.deepEqual((await call("workstreams", "GET")).workstreams, defaults, "Custom workstreams stay in their own workspace");
+  login("reviewer", workspace.id);
+  await call("deliverables/[id]", "DELETE", null, 200, { id: seoTask.id });
   const { comment } = await call("comments", "POST", { taskId: task.id, content: "Project comment" }, 201);
   const { project: second } = await call("projects", "POST", { name: "Second project" }, 201);
   const otherProject = await call("state", "GET", null, 200, {}, `?projectId=${second.id}`);

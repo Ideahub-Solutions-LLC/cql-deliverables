@@ -97,3 +97,11 @@ export const deliveryNotifications = sqliteTable("delivery_notifications", {
   readAt: text("read_at"),
   createdAt: text("created_at").notNull(),
 }, (t) => [index("delivery_notifications_recipient").on(t.recipientUsername, t.createdAt)]);
+
+// Custom workstreams added by Admin/Reviewer accounts. The eight defaults live in lib/workstreams.ts.
+export const deliveryWorkstreams = sqliteTable("delivery_workstreams", {
+  workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  createdBy: text("created_by").notNull().references(() => deliveryUsers.username),
+  createdAt: text("created_at").notNull(),
+}, (t) => [uniqueIndex("delivery_workstreams_name").on(t.workspaceId, sql`${t.name} COLLATE NOCASE`)]);
