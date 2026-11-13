@@ -11,7 +11,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "DSI Daily Delivery | IdeaHub",
+  title: "PMS iDeaHub",
   description: "One plan, clear owners, visible progress. DSI reset execution from October 22 to December 18, 2026.",
   icons: {
     icon: "/ideahub-icon.png",

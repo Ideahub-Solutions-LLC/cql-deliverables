@@ -5,7 +5,7 @@ import LoginForm from "./login-form";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Sign in · DSI Daily Delivery" };
+export const metadata: Metadata = { title: "PMS iDeaHub" };
 
 export default async function LoginPage() {
   if (await getAuthenticatedUser()) redirect("/");
