@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ArrowLeft, ArrowUpRight, Building2, FolderKanban, Plus } from "lucide-react";
 import type { AuthenticatedUser } from "../lib/auth";
 import DashboardShell from "./dashboard-shell";
+import { PROJECT_PAGES, type ProjectPage } from "./project-pages";
 
 type WorkspaceProject = { id: string; name: string; createdAt: string };
 type WorkspaceOption = { id: string; name: string };
@@ -14,12 +15,14 @@ export default function WorkspaceHome({
   projects: initialProjects,
   user,
   selectedProject = null,
+  initialView = "today",
 }: {
   workspaceName: string;
   workspaces?: WorkspaceOption[];
   projects: WorkspaceProject[];
   user: AuthenticatedUser;
   selectedProject?: WorkspaceProject | null;
+  initialView?: ProjectPage;
 }) {
   const [projects, setProjects] = useState(initialProjects);
   const [activeProject, setActiveProject] = useState(selectedProject);
@@ -43,7 +46,7 @@ export default function WorkspaceHome({
       const project = result.project;
       if (!response.ok || !project) throw new Error(result.error || "Could not add this project.");
       setProjects((current) => [...current, project].sort((a, b) => a.name.localeCompare(b.name)));
-      window.location.assign(`/?projectId=${encodeURIComponent(project.id)}`);
+      window.location.assign(`/?projectId=${encodeURIComponent(project.id)}&view=${initialView}`);
       setName("");
       setAdding(false);
     } catch (cause) {
@@ -54,7 +57,7 @@ export default function WorkspaceHome({
   }
 
   return (
-    <DashboardShell user={user} workspaceName={workspaceName} workspaceTree workspaceList={workspaces} workspaceProjects={projects}>
+    <DashboardShell user={user} workspaceName={workspaceName} workspaceTree workspaceList={workspaces} workspaceProjects={projects} showProjectNavigation activePage={initialView}>
       <section className="workspace-content">
         {activeProject ? (
           <>
@@ -63,14 +66,14 @@ export default function WorkspaceHome({
               <div><span className="workspace-kicker">PROJECT</span><h1>{activeProject.name}</h1><p>This project has been added to {workspaceName}.</p></div>
               <span className="workspace-project-symbol"><FolderKanban size={25} /></span>
             </div>
-            <a className="workspace-open-project" href={`/?projectId=${encodeURIComponent(activeProject.id)}`}>
+            <a className="workspace-open-project" href={`/?projectId=${encodeURIComponent(activeProject.id)}&view=${initialView}`}>
               Open project <ArrowUpRight size={16} />
             </a>
           </>
         ) : (
           <>
             <div className="workspace-heading">
-              <div><span className="workspace-kicker">YOUR WORKSPACE</span><h1>{workspaceName}</h1><p>Create a project, then add deliverables with owners, dates, and review criteria.</p></div>
+              <div><span className="workspace-kicker">{PROJECT_PAGES.find((page) => page.id === initialView)?.label}</span><h1>{workspaceName}</h1><p>Select a project to open its {PROJECT_PAGES.find((page) => page.id === initialView)?.label.toLowerCase()} page, or create a project to get started.</p></div>
               <span className="workspace-project-symbol"><Building2 size={25} /></span>
             </div>
             <ol className="setup-progress" aria-label="Workspace setup"><li className="complete">1. Workspace created</li><li className={projects.length ? "complete" : ""}>2. {projects.length ? "Choose a project" : "Add your first project"}</li><li>3. Set up deliverables</li></ol>
@@ -78,7 +81,7 @@ export default function WorkspaceHome({
             {projects.length ? (
               <div className="workspace-projects">
                 {projects.map((project) => (
-                  <button className="workspace-project-card" key={project.id} onClick={() => window.location.assign(`/?projectId=${encodeURIComponent(project.id)}`)}>
+                  <button className="workspace-project-card" key={project.id} onClick={() => window.location.assign(`/?projectId=${encodeURIComponent(project.id)}&view=${initialView}`)}>
                     <span className="project-card-icon"><FolderKanban size={19} /></span>
                     <span className="project-card-copy"><strong>{project.name}</strong><small>Project · {workspaceName}</small></span>
                     <ArrowUpRight size={16} className="project-card-arrow" />

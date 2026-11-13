@@ -7,11 +7,12 @@ import DashboardShell from "./dashboard-shell";
 import ProjectConsole from "./project-console";
 import WorkspaceHome from "./workspace-home";
 import type { Plan } from "../lib/delivery";
+import { isProjectPage } from "./project-pages";
 
 export const dynamic = "force-dynamic";
 type Project = { id: string; name: string; createdAt: string };
 
-export default async function Home({ searchParams }: { searchParams?: Promise<{ projectId?: string; taskId?: string }> }) {
+export default async function Home({ searchParams }: { searchParams?: Promise<{ projectId?: string; taskId?: string; view?: string }> }) {
   const user = await getAuthenticatedUser();
   if (!user) redirect("/login");
   if (!env.DB) throw new Error("Workspace database is not configured.");
@@ -22,7 +23,8 @@ export default async function Home({ searchParams }: { searchParams?: Promise<{ 
   const workspace = await env.DB.prepare("SELECT name FROM workspaces WHERE id = ? AND active = 1")
     .bind(user.workspaceId).first<{ name: string }>();
   if (!workspace) redirect("/login");
-  const { projectId, taskId } = (await searchParams) || {};
+  const { projectId, taskId, view } = (await searchParams) || {};
+  const initialView = isProjectPage(view) ? view : "today";
   const [projectsResult, workspacesResult] = await Promise.all([
     env.DB.prepare(
       "SELECT id, name, created_at AS createdAt FROM workspace_projects WHERE workspace_id = ? ORDER BY created_at, name",
@@ -33,11 +35,11 @@ export default async function Home({ searchParams }: { searchParams?: Promise<{ 
   ]);
   const projects = projectsResult.results ?? [];
   const workspaces = workspacesResult.results ?? [];
-  if (!projectId) return <WorkspaceHome workspaceName={workspace.name} workspaces={workspaces} projects={projects} user={user} />;
+  if (!projectId) return <WorkspaceHome workspaceName={workspace.name} workspaces={workspaces} projects={projects} user={user} initialView={initialView} />;
   const project = projects.find((item) => item.id === projectId);
   if (!project) redirect("/");
   if (project.id === "dsi-delivery-tracker" && user.workspaceId === "digital-smile-innovations") {
-    return <DeliveryConsole initialTaskId={taskId} plan={source as unknown as Plan} user={user} projectId={project.id} workspaceName={workspace.name} />;
+    return <DeliveryConsole initialTaskId={taskId} initialView={initialView} plan={source as unknown as Plan} user={user} projectId={project.id} workspaceName={workspace.name} />;
   }
-  return <ProjectConsole initialTaskId={taskId} key={project.id} project={project} workspaceName={workspace.name} workspaces={workspaces} projects={projects} user={user} />;
+  return <ProjectConsole initialTaskId={taskId} initialView={initialView} key={project.id} project={project} workspaceName={workspace.name} workspaces={workspaces} projects={projects} user={user} />;
 }

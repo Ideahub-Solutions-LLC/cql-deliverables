@@ -7,11 +7,12 @@ import DashboardLink from "./dashboard-link";
 import WorkspaceSwitcher from "./workspace-switcher";
 import WorkspaceTree from "./workspace-tree";
 import { useMobileNavigation } from "../hooks/use-mobile-navigation";
+import { PROJECT_PAGES, type ProjectPage } from "./project-pages";
 
 type WorkspaceProject = { id: string; name: string };
 type WorkspaceNode = { id: string; name: string };
 
-export default function DashboardShell({ user, workspaceName = "", workspaceTree = false, workspaceProjects = [], workspaceList = [], children }: { user: AuthenticatedUser; workspaceName?: string; workspaceTree?: boolean; workspaceProjects?: WorkspaceProject[]; workspaceList?: WorkspaceNode[]; children: React.ReactNode }) {
+export default function DashboardShell({ user, workspaceName = "", workspaceTree = false, workspaceProjects = [], workspaceList = [], showProjectNavigation = false, projectId, activePage = "today", children }: { user: AuthenticatedUser; workspaceName?: string; workspaceTree?: boolean; workspaceProjects?: WorkspaceProject[]; workspaceList?: WorkspaceNode[]; showProjectNavigation?: boolean; projectId?: string; activePage?: ProjectPage; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const { navigationRef, triggerRef, mobile } = useMobileNavigation(open, setOpen);
   return <div className="console-shell dashboard-shell">
@@ -25,6 +26,14 @@ export default function DashboardShell({ user, workspaceName = "", workspaceTree
           ? <WorkspaceTree workspaceId={user.workspaceId} workspaceName={workspaceName} workspaces={workspaceList} projects={workspaceProjects} canAdd={user.role === "admin" || user.role === "reviewer"} />
           : <WorkspaceSwitcher workspaceId={user.workspaceId} workspaceName={workspaceName} canAdd={user.role === "admin" || user.role === "reviewer"} compact />}
       </div>
+      {showProjectNavigation && <nav className="project-page-nav" aria-label="Project pages">
+        {PROJECT_PAGES.map(({ id, label, icon: Icon }) => {
+          const href = projectId
+            ? `/?projectId=${encodeURIComponent(projectId)}&view=${id}`
+            : `/?view=${id}`;
+          return <a key={id} href={href} aria-current={activePage === id ? "page" : undefined}><Icon size={17}/><span>{label}</span>{activePage === id && <i/>}</a>;
+        })}
+      </nav>}
       <a className="nav-admin-link" href="/users"><Users size={18}/><span>List of users</span></a>
     </aside>
     <main className="main workspace-page">

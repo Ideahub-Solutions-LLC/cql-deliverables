@@ -22,8 +22,21 @@ export default function LoginForm() {
         credentials: "same-origin",
         body: JSON.stringify({ username, password }),
       });
-      const result:any = await response.json();
-      if (!response.ok) throw new Error(result.error || "Sign-in failed. Check your details and try again.");
+      const contentType = response.headers.get("content-type") || "";
+      let result: { error?: string } | null = null;
+      if (contentType.includes("application/json")) {
+        try {
+          result = await response.json() as { error?: string };
+        } catch {
+          if (response.ok) throw new Error("Sign-in returned an invalid response. Please try again.");
+        }
+      }
+      if (!response.ok) {
+        throw new Error(result?.error || (response.status >= 500
+          ? "Sign-in is temporarily unavailable. Please try again."
+          : "Sign-in failed. Check your details and try again."));
+      }
+      if (!result) throw new Error("Sign-in returned an invalid response. Please try again.");
       window.location.assign("/");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Sign-in failed. Check your details and try again.");
