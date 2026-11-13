@@ -66,6 +66,7 @@ export async function POST(request:Request) {
       const isPrivileged=user.role==="admin"||user.role==="reviewer";
       const definitionFields=["title","acceptance","startDate","dueDate","workstream"];
       if(!isPrivileged&&definitionFields.some((key:string)=>body.data?.[key]!==undefined))return Response.json({error:"Only an administrator or reviewer can edit the title, workstream, dates, or definition of done."},{status:403});
+      if(body.data?.ownerUsername!==undefined&&(!isPrivileged||body.entityType!=="task"))return Response.json({error:"Only an administrator or reviewer can change a deliverable's assignee."},{status:403});
       const isApproval=body.data?.status==="Accepted";
       const isReopening=previous?.payload.status==="Accepted" && body.data?.status!=="Accepted";
       if((isApproval||isReopening)&&!canReview(user.role)) return Response.json({error:"Only an authorized reviewer can accept or reopen work."},{status:403});
@@ -89,6 +90,12 @@ export async function POST(request:Request) {
           // Only a changed workstream joins the list, so older plan workstreams are not added by an unrelated save.
           if(workstream!==base.workstream)workstream=await rememberWorkstream(env.DB!,user.workspaceId,workstream,user.username);
           value.workstream=workstream;
+        }
+        if(body.data?.ownerUsername!==undefined){
+          const ownerUsername=typeof body.data.ownerUsername==="string"?body.data.ownerUsername:"";
+          const owner=await env.DB!.prepare("SELECT username,display_name,person_id FROM delivery_users WHERE username=? AND active=1").bind(ownerUsername).first<{username:string;display_name:string;person_id:string|null}>();
+          if(!owner)return Response.json({error:"Choose an active assignee."},{status:400});
+          value={...value,ownerUsername:owner.username,owner:owner.display_name,ownerPersonId:owner.person_id};
         }
 
       }
