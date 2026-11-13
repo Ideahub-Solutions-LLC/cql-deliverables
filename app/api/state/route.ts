@@ -72,7 +72,7 @@ export async function POST(request:Request) {
       const tasks=work.map(t=>({...t,...latest.find(e=>e.entityId===t.id)?.payload})) as Task[];
       const userRows=await env.DB!.prepare("SELECT display_name FROM delivery_users WHERE active=1").all<{display_name:string}>();
       const people=[...new Set([...plan.people.map(p=>p.name),...(userRows.results||[]).map(p=>p.display_name),user.displayName])];
-      const result=validateTaskUpdate(base,{...body.data,acceptedBy:body.data?.status==="Accepted"?user.displayName:"",version:body.version},tasks,people,{requireDelegation:projectId===LEGACY_PROJECT});
+      const result=validateTaskUpdate(base,{...body.data,version:body.version},tasks,people,{requireDelegation:projectId===LEGACY_PROJECT,reviewer:user.displayName});
       if(result.error) return Response.json({error:result.error},{status:400});
       value=result.value;
       if(isPrivileged&&body.entityType==="task") {
@@ -93,7 +93,6 @@ export async function POST(request:Request) {
 
       }
       if(value.status==="Accepted") {
-        value.acceptedBy=user.displayName;
         value.closedAt=previous?.payload.status==="Accepted" ? previous.payload.closedAt:new Date().toISOString();
       } else {
         value.acceptedBy="";

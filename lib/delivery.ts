@@ -54,7 +54,7 @@ export const METRICS = [
   {key:"costs",label:"Total delivery cost today",short:"Delivery cost",help:"Capped human hours × agreed rates + tools + ad spend. Do not enter only ads.",unit:"USD"},
 ] as const;
 
-export function validateTaskUpdate(task: Task, input: any, tasks: Task[], people: string[], options: { requireDelegation?: boolean } = {}): { value?: TaskUpdate; error?: string } {
+export function validateTaskUpdate(task: Task, input: any, tasks: Task[], people: string[], options: { requireDelegation?: boolean; reviewer?: string } = {}): { value?: TaskUpdate; error?: string } {
   if (!STATUSES.includes(input.status)) return {error:"Choose a valid stage."};
   if (!Number.isInteger(input.version) || input.version < 0) return {error:"The record version is missing. Refresh and try again."};
   const value: TaskUpdate = {
@@ -72,9 +72,9 @@ export function validateTaskUpdate(task: Task, input: any, tasks: Task[], people
   }
   if(value.status === "Accepted") {
     if(!value.evidence) return {error:"Attach an evidence link or a specific delivery reference before accepting."};
-    if(!value.acceptedBy) return {error:"Record who reviewed and accepted this deliverable."};
-    if(!people.includes(value.acceptedBy)) return {error:"Choose a reviewer from the team."};
-    if(options.requireDelegation !== false && value.acceptedBy !== "Wyline" && !value.reviewNote) return {error:"A delegated review needs Wyline’s delegation or approval reference."};
+    if(value.acceptedBy && !people.includes(value.acceptedBy)) return {error:"Choose a reviewer from the team."};
+    const reviewer=options.reviewer||value.acceptedBy;
+    if(options.requireDelegation !== false && reviewer && reviewer !== "Wyline" && !value.reviewNote) return {error:"A delegated review needs Wyline’s delegation or approval reference."};
     const numericTarget = typeof task.target === "number" ? task.target : null;
     if(numericTarget !== null && numericTarget>0) {
       if(value.actual === null) return {error:"Enter the actual quantity delivered before acceptance."};
